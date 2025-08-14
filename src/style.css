@@ -1,0 +1,5 @@
+.xsm\:mt-6 {
+    @media (width < 40rem /* 640px */) {
+        margin-top: calc(var(--spacing) * 6) /* 1.5rem = 24px */;
+    }
+}

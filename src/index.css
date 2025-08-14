@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+body {
+    direction: rtl;
+    font-family: 'NRT-Bd', Arial, sans-serif;
+}
+
+main {
+    font-family: 'NRT-Reg', Arial, sans-serif !important;
+}
