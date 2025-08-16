@@ -53,6 +53,7 @@ const SafePartners = () => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [partnerToDeleteId, setPartnerToDeleteId] = useState(null);
     const [statusMessage, setStatusMessage] = useState(null);
+    const [SafeModal, setSafeModal] = useState(null);
     const [isSuccess, setIsSuccess] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState(defaultFormData);
@@ -524,8 +525,51 @@ const SafePartners = () => {
                         size={18}
                     />
                 </div>
+                {statusMessage && (
+                    <div
+                        className={`p-4 rounded-lg mb-6 flex items-center justify-between ${isSuccess
+                            ? "bg-green-500/20 text-green-200 border border-green-500/30"
+                            : "bg-red-500/20 text-red-200 border border-red-500/30"
+                            }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            {isSuccess ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
+                            <span>{statusMessage}</span>
+                        </div>
+                        <button
+                            onClick={() => setStatusMessage(null)}
+                            className="text-white/70 hover:text-white"
+                            aria-label="Dismiss status message"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+                )}
+                <button
+                            onClick={() => {
+                                if (SafeModal) {
+                                    setSafeModal(null);
+                                } else {
+                                    setSafeModal(true);
+                                }
+                            }}
+                            className="w-full flex items-center justify-center gap-2 bg-gray-700/60 hover:bg-gray-700/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                        >
+                            {SafeModal ? (
+                                <>
+                                    <X size={18} />
+                                    شاردنەوە
+                                </>
+                            ) : (
+                                <>
+                                    <Plus size={18} />
+                                    بیشاندانی کۆی گشتی
+                                </>
+                            )}
+                        </button>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {SafeModal && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 py-4 lg:grid-cols-3 gap-4 transition-all duration-300 transform scale-100 opacity-100">
                     {Object.entries(totals).map(([safeTypeName, safeTotal]) => (
                         <div
                             key={safeTypeName}
@@ -534,7 +578,7 @@ const SafePartners = () => {
                             <h3 className="text-xl font-bold text-white mb-2">
                                 کۆی گشتی {safeTypeName}
                             </h3>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-1 gap-2">
                                 <div className="bg-white/5 rounded p-2">
                                     <div className="text-white/60 text-xs">USD</div>
                                     <div className="text-white font-mono">
@@ -557,27 +601,9 @@ const SafePartners = () => {
                         </div>
                     ))}
                 </div>
+                )};
 
-                {statusMessage && (
-                    <div
-                        className={`p-4 rounded-lg mb-6 flex items-center justify-between ${isSuccess
-                            ? "bg-green-500/20 text-green-200 border border-green-500/30"
-                            : "bg-red-500/20 text-red-200 border border-red-500/30"
-                            }`}
-                    >
-                        <div className="flex items-center gap-3">
-                            {isSuccess ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
-                            <span>{statusMessage}</span>
-                        </div>
-                        <button
-                            onClick={() => setStatusMessage(null)}
-                            className="text-white/70 hover:text-white"
-                            aria-label="Dismiss status message"
-                        >
-                            <X size={18} />
-                        </button>
-                    </div>
-                )}
+                
 
                 <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     {renderedPartners}
