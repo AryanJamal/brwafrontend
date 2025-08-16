@@ -11,12 +11,13 @@ const Sidebar = () => {
     { name: "سەرەکی", path: "/", icon: Home }, // "Home" in Kurdish
     { name: "مامەڵەکان", path: "/transactions", icon: CreditCard }, // "Transactions" in Kurdish
     { name: "جۆری قاسە", path: "/safe-types", icon: CreditCard }, // "Transactions" in Kurdish
-    { name: "شەریکەکان", path: "/safe-partners", icon: CreditCard }, // "Transactions" in Kurdish
+    { name: "حساباتی قاسەکان", path: "/safe-partners", icon: CreditCard }, // "Transactions" in Kurdish
     { name: "کریپتۆ", path: "/crypto-transactions", icon: CreditCard }, // "Transactions" in Kurdish
     { name: "ئاڵوگـۆڕ", path: "/exchange", icon: CreditCard }, // "Transactions" in Kurdish
     { name: "حەواڵەی هاتوو" , path: "/incoming-money", icon: CreditCard }, // "Transactions" in Kurdish
     { name: "حەواڵە کردن", path: "/outgoing-money", icon: CreditCard }, // "Transactions" in Kurdish
     { name: "دانانی پارە", path: "/safe-transactions", icon: CreditCard }, // "Transactions" in Kurdish
+    { name: "شەریکەکان", path: "/partners", icon: CreditCard }, // "Transactions" in Kurdish
     // Add more Kurdish items as needed
   ];
 

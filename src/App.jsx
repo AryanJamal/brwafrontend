@@ -10,6 +10,7 @@ import TransferxExchange from './pages/TransferExchange';
 import IncomingMoney from './pages/IncomingMoney';
 import OutgoingMoney from './pages/OutgoingMoney';
 import SafeTransactions from './pages/SafeTransactions';
+import Partners from './pages/Partners';
 // Import other pages as needed
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
             <Route path="/incoming-money" element={<IncomingMoney />} />
             <Route path="/outgoing-money" element={<OutgoingMoney />} />
             <Route path="/safe-transactions" element={<SafeTransactions />} />
+            <Route path="/partners" element={<Partners />} />
             {/* Add other routes here */}
           </Routes>
         </main>

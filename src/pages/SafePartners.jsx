@@ -8,20 +8,17 @@ import {
     CheckCircle,
     AlertTriangle,
     Loader2,
-    Edit2,
-    Search, // Added search icon
+    Search,
 } from "lucide-react";
+import Select from "react-select";
 import { safePartnersApi, safeTypesApi } from "../services/apiService";
-
+import api from "../services/apiService";
 const defaultFormData = {
-    partner_name: "",
-    partner_phone_number: "",
+    partner_id: "",
     safe_type_id: "",
     total_usd: "",
     total_usdt: "",
     total_iqd: "",
-    is_office: false,
-    is_person: false,
 };
 
 const formatPartnerResponse = (rawPartner, safeTypesList) => {
@@ -31,16 +28,17 @@ const formatPartnerResponse = (rawPartner, safeTypesList) => {
     const safeType = safeTypesList.find(
         (type) => type.id.toString() === rawPartner.safe_type_id
     );
+    const partner = rawPartner.partner || {
+        name: rawPartner.partner_name,
+        phone_number: rawPartner.partner_phone_number,
+    };
     return {
         ...rawPartner,
-        partner: {
-            name: rawPartner.partner_name,
-            phone_number: rawPartner.partner_phone_number,
-        },
+        partner,
         safe_type: safeType || {
             id: rawPartner.safe_type_id,
-            name: "Unknown",
-            type: "Unknown",
+            name: "نەزانراو",
+            type: "نەزانراو",
         },
     };
 };
@@ -48,6 +46,7 @@ const formatPartnerResponse = (rawPartner, safeTypesList) => {
 const SafePartners = () => {
     const [safePartners, setSafePartners] = useState([]);
     const [safeTypes, setSafeTypes] = useState([]);
+    const [partners, setPartners] = useState([]); // New state for partners list
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
@@ -57,11 +56,7 @@ const SafePartners = () => {
     const [isSuccess, setIsSuccess] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState(defaultFormData);
-    const [currentPartner, setCurrentPartner] = useState(null);
-
-    // New state for search query
     const [searchQuery, setSearchQuery] = useState("");
-    // New state for aggregated totals
     const [totals, setTotals] = useState({});
 
     const dismissStatus = useCallback(() => {
@@ -73,15 +68,17 @@ const SafePartners = () => {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [partnersResponse, typesResponse] = await Promise.all([
+            const [partnersResponse, typesResponse, allPartnersResponse] = await Promise.all([
                 safePartnersApi.getAll(),
                 safeTypesApi.getAll(),
+                api.partners.getAll(), // Fetch all partners
             ]);
             const formattedPartners = partnersResponse.data.map((p) =>
                 formatPartnerResponse(p, typesResponse.data)
             );
             setSafeTypes(typesResponse.data);
             setSafePartners(formattedPartners);
+            setPartners(allPartnersResponse.data); // Set partners list
             setLoading(false);
         } catch (err) {
             console.error("Failed to fetch data:", err);
@@ -90,7 +87,6 @@ const SafePartners = () => {
         }
     }, []);
 
-    // Effect to calculate totals whenever safePartners or safeTypes change
     useEffect(() => {
         if (safePartners.length > 0 && safeTypes.length > 0) {
             const calculatedTotals = safePartners.reduce((acc, partner) => {
@@ -123,59 +119,27 @@ const SafePartners = () => {
         }));
     };
 
-    const handleRadioChange = (e) => {
-        const { name } = e.target;
-        setFormData((prevData) => ({
-            ...prevData,
-            is_office: name === "is_office",
-            is_person: name === "is_person",
-        }));
-    };
-
     const handleCreateOrUpdate = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
         setError(null);
 
         const payload = {
-            partner_name: formData.partner_name,
-            partner_phone_number: formData.partner_phone_number,
+            partner_id: formData.partner_id,
             safe_type_id: formData.safe_type_id,
-            is_office: formData.is_office,
-            is_person: formData.is_person,
             total_usd: parseFloat(formData.total_usd) || 0,
             total_usdt: parseFloat(formData.total_usdt) || 0,
             total_iqd: parseFloat(formData.total_iqd) || 0,
         };
 
         try {
-            if (currentPartner) {
-                await safePartnersApi.update(currentPartner.id, payload);
-                setStatusMessage("Partner updated successfully.");
-                setSafePartners((prevPartners) =>
-                    prevPartners.map((p) =>
-                        p.id === currentPartner.id
-                            ? {
-                                ...p,
-                                ...payload,
-                                partner: {
-                                    name: payload.partner_name,
-                                    phone_number: payload.partner_phone_number,
-                                },
-                                safe_type: safeTypes.find(
-                                    (type) => type.id.toString() === payload.safe_type_id
-                                ),
-                            }
-                            : p
-                    )
-                );
-            } else {
-                await safePartnersApi.create(payload);
-                setStatusMessage("Partner created successfully.");
-                fetchData();
-            }
+            await safePartnersApi.create(payload);
+            setStatusMessage("Partner created successfully.");
+            fetchData();
             setIsSuccess(true);
             resetForm();
+
+
         } catch (err) {
             console.error("Form submission error:", err);
             setStatusMessage(`Error: ${err.message}`);
@@ -214,11 +178,8 @@ const SafePartners = () => {
     const resetForm = () => {
         setFormData(defaultFormData);
         setShowForm(false);
-        setCurrentPartner(null);
     };
 
-
-    // Filtered partners based on search query
     const filteredPartners = useMemo(() => {
         if (!searchQuery) {
             return safePartners;
@@ -235,75 +196,75 @@ const SafePartners = () => {
     }, [safePartners, searchQuery]);
 
     const renderedPartners = useMemo(() => {
-    if (filteredPartners.length === 0) {
+        if (filteredPartners.length === 0) {
+            return (
+                <div className="p-6 text-center text-white/60">
+                    هیچ داتایەک نەدۆزرایەوە
+                </div>
+            );
+        }
+
         return (
-            <div className="p-6 text-center text-white/60">
-                No safe partners found.
+            <div className="grid grid-cols-1 lg:grid-cols-2 md:grid-cols-1 gap-3 p-4">
+                {filteredPartners.map((partner) => (
+                    <div
+                        key={partner.id}
+                        className="bg-gray-800/80 backdrop-blur-sm border border-white/10 rounded-lg p-4"
+                    >
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h2 className="font-bold text-white">{partner.partner.name}</h2>
+                                <p className="text-sm text-white/70">
+                                    {partner.partner.phone_number || ""}
+                                </p>
+                            </div>
+                            <span
+                                className={`text-xs px-2 py-1 rounded-full ${partner.safe_type.type === "Crypto"
+                                    ? "bg-blue-500/20 text-blue-300"
+                                    : "bg-amber-500/20 text-amber-300"
+                                    }`}
+                            >
+                                {partner.safe_type.name}
+                            </span>
+                        </div>
+                        <div className="mt-3 grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-2 text-xl">
+                            <div className={`rounded p-2 ${partner.total_usd < 0 ? "bg-red-950" : "bg-white/5"}`}>
+                                <div className="text-white/60 text-xs">USD</div>
+                                <div className="text-white font-mono overflow-hidden">
+                                    {Number(partner.total_usd)?.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                    }) || "0.00"}
+                                </div>
+                            </div>
+                            <div className={`rounded p-2 ${partner.total_iqd < 0 ? "bg-red-950" : "bg-white/5"}`}>
+                                <div className="text-white/60 text-xs">IQD</div>
+                                <div className="text-white font-mono overflow-hidden">
+                                    {Number(partner.total_iqd)?.toLocaleString() || "0"}
+                                </div>
+                            </div>
+                            <div className={`rounded p-2 ${partner.total_usdt < 0 ? "bg-red-950" : "bg-white/5"}`}>
+                                <div className="text-white/60 text-xs">USDT</div>
+                                <div className="text-white font-mono overflow-hidden">
+                                    {Number(partner.total_usdt)?.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                    }) || "0.00"}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-3 flex justify-end gap-2">
+                            <button
+                                onClick={() => handleDelete(partner.id)}
+                                className="text-white/70 hover:text-red-400 p-1"
+                                aria-label={`Delete ${partner.partner.name}`}
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
+                    </div>
+                ))}
             </div>
         );
-    }
-
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 md:grid-cols-1 gap-3 p-4">
-            {filteredPartners.map((partner) => (
-                <div
-                    key={partner.id}
-                    className="bg-gray-800/80 backdrop-blur-sm border border-white/10 rounded-lg p-4"
-                >
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h2 className="font-bold text-white">{partner.partner.name}</h2>
-                            <p className="text-sm text-white/70">
-                                {partner.partner.phone_number || "No phone"}
-                            </p>
-                        </div>
-                        <span
-                            className={`text-xs px-2 py-1 rounded-full ${partner.safe_type.type === "Crypto"
-                                ? "bg-blue-500/20 text-blue-300"
-                                : "bg-amber-500/20 text-amber-300"
-                            }`}
-                        >
-                            {partner.safe_type.name}
-                        </span>
-                    </div>
-                    <div className="mt-3 grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-2 text-xl">
-                        <div className={`rounded p-2 ${partner.total_usd < 0 ? "bg-red-950" : "bg-white/5"}`}>
-                            <div className="text-white/60 text-xs">USD</div>
-                            <div className="text-white font-mono overflow-hidden">
-                                {Number(partner.total_usd)?.toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                }) || "0.00"}
-                            </div>
-                        </div>
-                        <div className={`rounded p-2 ${partner.total_iqd < 0 ? "bg-red-950" : "bg-white/5"}`}>
-                            <div className="text-white/60 text-xs">IQD</div>
-                            <div className="text-white font-mono overflow-hidden">
-                                {Number(partner.total_iqd)?.toLocaleString() || "0"}
-                            </div>
-                        </div>
-                        <div className={`rounded p-2 ${partner.total_usdt < 0 ? "bg-red-950" : "bg-white/5"}`}>
-                            <div className="text-white/60 text-xs">USDT</div>
-                            <div className="text-white font-mono overflow-hidden">
-                                {Number(partner.total_usdt)?.toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                }) || "0.00"}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="mt-3 flex justify-end gap-2">
-                        <button
-                            onClick={() => handleDelete(partner.id)}
-                            className="text-white/70 hover:text-red-400 p-1"
-                            aria-label={`Delete ${partner.partner.name}`}
-                        >
-                            <Trash2 size={18} />
-                        </button>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}, [filteredPartners, handleDelete]);
+    }, [filteredPartners, handleDelete]);
 
     if (loading)
         return (
@@ -334,7 +295,6 @@ const SafePartners = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <h1 className="text-2xl font-bold text-white">حساباتی قاسەکان</h1>
                     <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                        
                         <button
                             onClick={() => {
                                 if (showForm) {
@@ -348,23 +308,23 @@ const SafePartners = () => {
                             {showForm ? (
                                 <>
                                     <X size={18} />
-                                    هەڵوەشاندنەوە
+                                    لابردن
                                 </>
                             ) : (
                                 <>
                                     <Plus size={18} />
-                                    زیادکردنی خاوەن
+                                    زیادکردن
                                 </>
                             )}
                         </button>
                     </div>
                 </div>
-                
+
                 {showForm && (
                     <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all duration-300 transform scale-100 opacity-100">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold text-white">
-                                {"زیادکردنی حساب"}
+                                {"زیادکردن"}
                             </h2>
                             <button
                                 onClick={resetForm}
@@ -377,60 +337,104 @@ const SafePartners = () => {
                         <form onSubmit={handleCreateOrUpdate} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
+                                    {/* Partner Select */}
                                     <div>
-                                        <label htmlFor="partner_name" className="block text-white/80 mb-2">
-                                            ناوی خاوەن حساب
+                                        <label htmlFor="partner_id" className="block text-white/80 mb-2">
+                                            خاوەن حساب
                                         </label>
-                                        <input
-                                            type="text"
-                                            id="partner_name"
-                                            name="partner_name"
-                                            value={formData.partner_name}
-                                            onChange={handleInputChange}
-                                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                            required
+                                        <Select
+                                            id="partner_id"
+                                            name="partner_id"
+                                            options={partners.map((partner) => ({
+                                                value: partner.id,
+                                                label: partner.name,
+                                            }))}
+                                            value={
+                                                partners
+                                                    .map((partner) => ({
+                                                        value: partner.id,
+                                                        label: partner.name,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.partner_id) || null
+                                            }
+                                            onChange={(selected) =>
+                                                setFormData((prev) => ({ ...prev, partner_id: selected?.value || "" }))
+                                            }
+                                            placeholder="خاوەنی حساب دیاری بکە"
+                                            classNamePrefix="react-select"
+                                            styles={{
+                                                control: (base) => ({
+                                                    ...base,
+                                                    backgroundColor: "rgba(30,41,59,0.8)", // slate-800/80
+                                                    borderColor: "rgba(255,255,255,0.2)",
+                                                    borderRadius: "0.5rem",
+                                                    padding: "2px",
+                                                    color: "white",
+                                                }),
+                                                singleValue: (base) => ({ ...base, color: "white" }),
+                                                menu: (base) => ({
+                                                    ...base,
+                                                    backgroundColor: "#1e293b", // slate-800
+                                                    color: "white",
+                                                }),
+                                                option: (base, { isFocused }) => ({
+                                                    ...base,
+                                                    backgroundColor: isFocused ? "rgba(59,130,246,0.5)" : "transparent",
+                                                    color: "white",
+                                                    cursor: "pointer",
+                                                }),
+                                            }}
                                         />
                                     </div>
-                                    <div>
-                                        <label htmlFor="partner_phone_number" className="block text-white/80 mb-2">
-                                            ژمارەی مۆبایل
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            id="partner_phone_number"
-                                            name="partner_phone_number"
-                                            value={formData.partner_phone_number}
-                                            onChange={handleInputChange}
-                                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                        />
-                                    </div>
+
+                                    {/* Safe Type Select */}
                                     <div>
                                         <label htmlFor="safe_type_id" className="block text-white/80 mb-2">
                                             جۆری قاسە
                                         </label>
-                                        <div className="relative">
-                                            <select
-                                                id="safe_type_id"
-                                                name="safe_type_id"
-                                                value={formData.safe_type_id}
-                                                onChange={handleInputChange}
-                                                className="w-full bg-slate-800/80 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none"
-                                                required
-                                            >
-                                                <option value="" disabled>
-                                                    جۆر دیاری بکە
-                                                </option>
-                                                {safeTypes.map((type) => (
-                                                    <option key={type.id} value={type.id}>
-                                                        {type.name} ({type.type})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown
-                                                className="absolute left-3 top-3 text-white/50 pointer-events-none"
-                                                size={18}
-                                            />
-                                        </div>
+                                        <Select
+                                            id="safe_type_id"
+                                            name="safe_type_id"
+                                            options={safeTypes.map((type) => ({
+                                                value: type.id,
+                                                label: `${type.name} (${type.type})`,
+                                            }))}
+                                            value={
+                                                safeTypes
+                                                    .map((type) => ({
+                                                        value: type.id,
+                                                        label: `${type.name} (${type.type})`,
+                                                    }))
+                                                    .find((opt) => opt.value === formData.safe_type_id) || null
+                                            }
+                                            onChange={(selected) =>
+                                                setFormData((prev) => ({ ...prev, safe_type_id: selected?.value || "" }))
+                                            }
+                                            placeholder="جۆر دیاری بکە"
+                                            classNamePrefix="react-select"
+                                            styles={{
+                                                control: (base) => ({
+                                                    ...base,
+                                                    backgroundColor: "rgba(30,41,59,0.8)",
+                                                    borderColor: "rgba(255,255,255,0.2)",
+                                                    borderRadius: "0.5rem",
+                                                    padding: "2px",
+                                                    color: "white",
+                                                }),
+                                                singleValue: (base) => ({ ...base, color: "white" }),
+                                                menu: (base) => ({
+                                                    ...base,
+                                                    backgroundColor: "#1e293b",
+                                                    color: "white",
+                                                }),
+                                                option: (base, { isFocused }) => ({
+                                                    ...base,
+                                                    backgroundColor: isFocused ? "rgba(59,130,246,0.5)" : "transparent",
+                                                    color: "white",
+                                                    cursor: "pointer",
+                                                }),
+                                            }}
+                                        />
                                     </div>
                                 </div>
 
@@ -480,36 +484,6 @@ const SafePartners = () => {
                                 </div>
                             </div>
 
-                            <div className="flex space-x-6 items-center">
-                                <label className="block text-white/80">جۆری خاوەن</label>
-                                <div className="flex items-center">
-                                    <input
-                                        id="is_office"
-                                        type="radio"
-                                        name="is_office"
-                                        checked={formData.is_office}
-                                        onChange={handleRadioChange}
-                                        className="h-4 w-4 text-blue-500 border-gray-300 focus:ring-blue-500"
-                                    />
-                                    <label htmlFor="is_office" className="mr-2 text-white/80">
-                                        نوسینگە
-                                    </label>
-                                </div>
-                                <div className="flex items-center">
-                                    <input
-                                        id="is_person"
-                                        type="radio"
-                                        name="is_person"
-                                        checked={formData.is_person}
-                                        onChange={handleRadioChange}
-                                        className="h-4 w-4 text-blue-500 border-gray-300 focus:ring-blue-500"
-                                    />
-                                    <label htmlFor="is_person" className="mr-2 text-white/80">
-                                        ئامانەت
-                                    </label>
-                                </div>
-                            </div>
-
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="submit"
@@ -521,7 +495,7 @@ const SafePartners = () => {
                                     ) : (
                                         <Check size={18} />
                                     )}
-                                    {"زیادکردنی خاوەن حساب"}
+                                    {"زیادکردن"}
                                 </button>
                                 <button
                                     type="button"
@@ -535,20 +509,22 @@ const SafePartners = () => {
                         </form>
                     </div>
                 )}
-                {/* Aggregated Totals Display */}
-                <div className="flex items-right justify-right gap-2 backdrop-blur-sm text-white py-5 rounded-lg transition-all">
-                            <input
-                                type="text"
-                                placeholder="گەڕان بەدوای خاوەن یان قاسە..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 pr-10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-slate-800/80 lg:w-100"
-                            />
-                            <Search
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50"
-                                size={18}
-                            />
-                        </div>
+
+                <div className="relative items-right justify-right gap-2 backdrop-blur-sm text-white py-5 rounded-lg transition-all">
+
+                    <input
+                        type="text"
+                        placeholder="گەڕان بەدوای خاوەن یان قاسە..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 pr-10 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-slate-800/80 lg:w-100"
+                    />
+                    <Search
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50"
+                        size={18}
+                    />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                     {Object.entries(totals).map(([safeTypeName, safeTotal]) => (
                         <div
@@ -562,19 +538,19 @@ const SafePartners = () => {
                                 <div className="bg-white/5 rounded p-2">
                                     <div className="text-white/60 text-xs">USD</div>
                                     <div className="text-white font-mono">
-                                        {safeTotal.usd?.toLocaleString(undefined, {minimumFractionDigits: 2}) || "0.00"}
+                                        {safeTotal.usd?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}
                                     </div>
                                 </div>
                                 <div className="bg-white/5 rounded p-2">
                                     <div className="text-white/60 text-xs">IQD</div>
                                     <div className="text-white font-mono overflow-hidden">
-                                        {safeTotal.iqd?.toLocaleString(undefined, {minimumFractionDigits: 2}) || "0"}
+                                        {safeTotal.iqd?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0"}
                                     </div>
                                 </div>
                                 <div className="bg-white/5 rounded p-2">
                                     <div className="text-white/60 text-xs">USDT</div>
                                     <div className="text-white font-mono overflow-hidden">
-                                        {safeTotal.usdt?.toLocaleString(undefined, {minimumFractionDigits: 2}) || "0.00"}
+                                        {safeTotal.usdt?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}
                                     </div>
                                 </div>
                             </div>
@@ -582,12 +558,11 @@ const SafePartners = () => {
                     ))}
                 </div>
 
-
                 {statusMessage && (
                     <div
                         className={`p-4 rounded-lg mb-6 flex items-center justify-between ${isSuccess
-                                ? "bg-green-500/20 text-green-200 border border-green-500/30"
-                                : "bg-red-500/20 text-red-200 border border-red-500/30"
+                            ? "bg-green-500/20 text-green-200 border border-green-500/30"
+                            : "bg-red-500/20 text-red-200 border border-red-500/30"
                             }`}
                     >
                         <div className="flex items-center gap-3">
@@ -603,8 +578,6 @@ const SafePartners = () => {
                         </button>
                     </div>
                 )}
-
-                
 
                 <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     {renderedPartners}
