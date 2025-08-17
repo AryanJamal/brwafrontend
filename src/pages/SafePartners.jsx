@@ -13,6 +13,7 @@ import {
 import Select from "react-select";
 import { safePartnersApi, safeTypesApi } from "../services/apiService";
 import api from "../services/apiService";
+import selectStyles from "../components/styles";
 const defaultFormData = {
     partner_id: "",
     safe_type_id: "",
@@ -363,28 +364,7 @@ const SafePartners = () => {
                                             }
                                             placeholder="خاوەنی حساب دیاری بکە"
                                             classNamePrefix="react-select"
-                                            styles={{
-                                                control: (base) => ({
-                                                    ...base,
-                                                    backgroundColor: "rgba(30,41,59,0.8)", // slate-800/80
-                                                    borderColor: "rgba(255,255,255,0.2)",
-                                                    borderRadius: "0.5rem",
-                                                    padding: "2px",
-                                                    color: "white",
-                                                }),
-                                                singleValue: (base) => ({ ...base, color: "white" }),
-                                                menu: (base) => ({
-                                                    ...base,
-                                                    backgroundColor: "#1e293b", // slate-800
-                                                    color: "white",
-                                                }),
-                                                option: (base, { isFocused }) => ({
-                                                    ...base,
-                                                    backgroundColor: isFocused ? "rgba(59,130,246,0.5)" : "transparent",
-                                                    color: "white",
-                                                    cursor: "pointer",
-                                                }),
-                                            }}
+                                            styles={selectStyles}
                                         />
                                     </div>
 
@@ -413,28 +393,7 @@ const SafePartners = () => {
                                             }
                                             placeholder="جۆر دیاری بکە"
                                             classNamePrefix="react-select"
-                                            styles={{
-                                                control: (base) => ({
-                                                    ...base,
-                                                    backgroundColor: "rgba(30,41,59,0.8)",
-                                                    borderColor: "rgba(255,255,255,0.2)",
-                                                    borderRadius: "0.5rem",
-                                                    padding: "2px",
-                                                    color: "white",
-                                                }),
-                                                singleValue: (base) => ({ ...base, color: "white" }),
-                                                menu: (base) => ({
-                                                    ...base,
-                                                    backgroundColor: "#1e293b",
-                                                    color: "white",
-                                                }),
-                                                option: (base, { isFocused }) => ({
-                                                    ...base,
-                                                    backgroundColor: isFocused ? "rgba(59,130,246,0.5)" : "transparent",
-                                                    color: "white",
-                                                    cursor: "pointer",
-                                                }),
-                                            }}
+                                            styles={selectStyles}
                                         />
                                     </div>
                                 </div>

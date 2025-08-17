@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { api } from '../services/apiService';
-import { Plus, X, Coins, CheckCircle, DollarSign, AlertTriangle, Wallet, Edit, Trash2, Check, ArrowUp, ArrowDown, Clock, XCircle } from 'lucide-react';
+import { Plus, X, Coins, CheckCircle, DollarSign, Filter, AlertTriangle, Wallet, Edit, Trash2, Check, ArrowUp, ArrowDown, Clock, XCircle, Search } from 'lucide-react';
 import formatDate from '../components/formatdate';
-
+import selectStyles from '../components/styles';
 const CryptoTransactions = () => {
     const [transactions, setTransactions] = useState([]);
     const [partners, setPartners] = useState([]);
@@ -11,11 +11,9 @@ const CryptoTransactions = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
-
-    // We've replaced window.confirm with a state-driven modal concept.
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [transactionToDelete, setTransactionToDelete] = useState(null);
-
+    const [showFilters, setShowFilters] = useState(false);
     const [formData, setFormData] = useState({
         transaction_type: 'Buy',
         partner: '',
@@ -30,63 +28,15 @@ const CryptoTransactions = () => {
         client_name: ''
     });
 
-    // React-Select custom styles for dark theme
-    const selectStyles = {
-        control: (provided, state) => ({
-            ...provided,
-            backgroundColor: 'rgba(30, 41, 59, 0.8)', // slate-800/80
-            borderColor: 'rgba(255, 255, 255, 0.2)',
-            color: 'white',
-            minHeight: '42px',
-            boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : 'none',
-            '&:hover': {
-                borderColor: 'rgba(255, 255, 255, 0.3)'
-            }
-        }),
-        menu: (provided) => ({
-            ...provided,
-            backgroundColor: 'rgba(30, 41, 59, 0.95)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            backdropFilter: 'blur(12px)'
-        }),
-        option: (provided, state) => ({
-            ...provided,
-            backgroundColor: state.isSelected 
-                ? 'rgba(59, 130, 246, 0.8)' 
-                : state.isFocused 
-                ? 'rgba(255, 255, 255, 0.1)' 
-                : 'transparent',
-            color: 'white',
-            '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)'
-            }
-        }),
-        singleValue: (provided) => ({
-            ...provided,
-            color: 'white'
-        }),
-        placeholder: (provided) => ({
-            ...provided,
-            color: 'rgba(255, 255, 255, 0.6)'
-        }),
-        input: (provided) => ({
-            ...provided,
-            color: 'white'
-        }),
-        indicatorSeparator: (provided) => ({
-            ...provided,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        }),
-        dropdownIndicator: (provided) => ({
-            ...provided,
-            color: 'rgba(255, 255, 255, 0.6)',
-            '&:hover': {
-                color: 'white'
-            }
-        })
-    };
+    const [filters, setFilters] = useState({
+        searchQuery: '',
+        status: '',
+        partner: '',
+        startDate: '',
+        endDate: '',
+    });
 
-    // Prepare options for react-select
+    
     const cryptoSafeOptions = safes
         .filter(safe => safe.type === 'Crypto')
         .map(safe => ({
@@ -106,27 +56,58 @@ const CryptoTransactions = () => {
         label: `${partner.partner.name} - ${partner.safe_type.name}`
     }));
 
-    // Fetch initial data
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [transRes, partnersRes, safesRes] = await Promise.all([
-                    api.cryptoTransactions.getAll(),
-                    api.safePartnersApi.getAll(),
-                    api.safeTypes.getAll()
-                ]);
+    const fetchInitialData = async () => {
+        try {
+            const [partnersRes, safesRes] = await Promise.all([
+                api.safePartnersApi.getAll(),
+                api.safeTypes.getAll()
+            ]);
 
-                setTransactions(transRes.data);
-                setPartners(partnersRes.data);
-                setSafes(safesRes.data);
-                setLoading(false);
-            } catch (err) {
-                setError(err.message);
-                setLoading(false);
+            setPartners(partnersRes.data);
+            setSafes(safesRes.data);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    // New function to fetch transactions based on filters
+    const fetchFilteredTransactions = async () => {
+        setLoading(true);
+        try {
+            // Build query parameters object
+            const queryParams = {};
+            
+            if (filters.searchQuery.trim()) {
+                queryParams.search = filters.searchQuery.trim();
             }
-        };
+            if (filters.status) {
+                queryParams.status = filters.status;
+            }
+            if (filters.partner) {
+                queryParams.partner_id = filters.partner;
+            }
+            if (filters.startDate) {
+                queryParams.start_date = filters.startDate;
+            }
+            if (filters.endDate) {
+                queryParams.end_date = filters.endDate;
+            }
+            // Approach 1: Pass params directly
+            const transRes = await api.cryptoTransactions.getAll(queryParams);
+            
+            setTransactions(transRes.data);
+            setLoading(false);
+        } catch (err) {
+            console.error('Error fetching transactions:', err);
+            setError(err.message);
+            setLoading(false);
+        }
+    };
 
-        fetchData();
+    useEffect(() => {
+        fetchInitialData();
+        fetchFilteredTransactions(); // Initial fetch
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleInputChange = (e) => {
@@ -134,7 +115,6 @@ const CryptoTransactions = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Handle react-select changes
     const handleSelectChange = (selectedOption, actionMeta) => {
         const { name } = actionMeta;
         setFormData(prev => ({ 
@@ -143,12 +123,25 @@ const CryptoTransactions = () => {
         }));
     };
 
+    const handleFilterInputChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFilterSelectChange = (selectedOption, actionMeta) => {
+        const { name } = actionMeta;
+        setFilters(prev => ({ 
+            ...prev, 
+            [name]: selectedOption ? selectedOption.value : '' 
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await api.cryptoTransactions.create(formData);
-            setTransactions([...transactions, res.data]);
+            await api.cryptoTransactions.create(formData);
             resetForm();
+            await fetchFilteredTransactions(); // Re-fetch transactions to update the list
         } catch (err) {
             setError(err.message);
         }
@@ -162,9 +155,9 @@ const CryptoTransactions = () => {
     const confirmDelete = async () => {
         try {
             await api.cryptoTransactions.delete(transactionToDelete);
-            setTransactions(transactions.filter(t => t.id !== transactionToDelete));
             setShowDeleteModal(false);
             setTransactionToDelete(null);
+            await fetchFilteredTransactions(); // Re-fetch transactions to update the list
         } catch (err) {
             setError(err.message);
         }
@@ -204,7 +197,6 @@ const CryptoTransactions = () => {
     if (error) return (
         <div className="p-4 min-h-screen text-white">
             <div className="mx-auto max-w-7xl">
-                {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">کڕین و فرۆشتنی کریپتۆ</h1>
                 </div>
@@ -222,16 +214,25 @@ const CryptoTransactions = () => {
             <div className="mx-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-white">کڕین و فرۆشتنی کریپتۆ</h1>
-                    <button
-                        onClick={() => setShowForm(!showForm)}
+                    <div className='flex gap-2'>
+                        <button
+                            onClick={() =>{ setShowFilters(!showFilters), setShowForm(false)}}
+                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                        >
+                            {showFilters ? "لابردنی فلتەر" : "فلتەر کردن"}
+                            <Filter size={18} />
+                        </button>
+                        <button
+                        onClick={() => {setShowForm(!showForm), setShowFilters(false)}}
                         className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
                     >
                         <Plus size={18} />
                         {showForm ? "لابردن" : "مامەڵە"}
                     </button>
+                    </div>
+                    
                 </div>
 
-                {/* Form Panel */}
                 {showForm && (
                     <div className="bg-gray-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
                         <div className="flex justify-between items-center mb-4">
@@ -244,7 +245,6 @@ const CryptoTransactions = () => {
                         </div>
 
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Transaction Type */}
                             <div>
                                 <label className="block text-white/80 mb-2">جۆری مامەڵە</label>
                                 <div className="flex border border-white/20">
@@ -273,7 +273,6 @@ const CryptoTransactions = () => {
                                 </div>
                             </div>
 
-                            {/* Status */}
                             <div>
                                 <label className="block text-white/80 mb-2">بارودۆخ</label>
                                 <div className="flex border border-white/20">
@@ -302,7 +301,6 @@ const CryptoTransactions = () => {
                                 </div>
                             </div>
 
-                            {/* USDT Amount */}
                             <div>
                                 <label className="block text-white/80 mb-2">بڕی USDT</label>
                                 <input
@@ -317,7 +315,6 @@ const CryptoTransactions = () => {
                                 />
                             </div>
 
-                            {/* USDT Price */}
                             <div>
                                 <label className="block text-white/80 mb-2">نرخی USDT</label>
                                 <input
@@ -332,7 +329,6 @@ const CryptoTransactions = () => {
                                 />
                             </div>
 
-                            {/* Currency */}
                             <div>
                                 <label className="block text-white/80 mb-2">دراوی فرۆشتن/کڕین</label>
                                 <div className="flex border border-white/20">
@@ -361,7 +357,6 @@ const CryptoTransactions = () => {
                                 </div>
                             </div>
 
-                            {/* Crypto Safe - React Select */}
                             <div>
                                 <label className="block text-white/80 mb-2">شوێنی کریپتۆ</label>
                                 <Select
@@ -376,7 +371,6 @@ const CryptoTransactions = () => {
                                 />
                             </div>
 
-                            {/* Payment Safe - React Select */}
                             <div>
                                 <label className="block text-white/80 mb-2">شوێنی پارە</label>
                                 <Select
@@ -391,7 +385,6 @@ const CryptoTransactions = () => {
                                 />
                             </div>
 
-                            {/* Bonus */}
                             <div>
                                 <label className="block text-white/80 mb-2">بڕی عمولە</label>
                                 <input
@@ -405,7 +398,6 @@ const CryptoTransactions = () => {
                                 />
                             </div>
 
-                            {/* Bonus Currency */}
                             <div>
                                 <label className="block text-white/80 mb-2">دراوی عمولە</label>
                                 <div className="flex border border-white/20">
@@ -445,7 +437,6 @@ const CryptoTransactions = () => {
                                 </div>
                             </div>
 
-                            {/* Client Name */}
                             <div>
                                 <label className="block text-white/80 mb-2">ناوی فرۆشیار/کڕیار</label>
                                 <input
@@ -457,7 +448,6 @@ const CryptoTransactions = () => {
                                 />
                             </div>
 
-                            {/* Partner - React Select */}
                             <div>
                                 <label className="block text-white/80 mb-2">شەریـک</label>
                                 <Select
@@ -472,7 +462,6 @@ const CryptoTransactions = () => {
                                 />
                             </div>
 
-                            {/* Form Actions */}
                             <div className="md:col-span-2 flex gap-3 pt-2">
                                 <button
                                     type="submit"
@@ -495,7 +484,90 @@ const CryptoTransactions = () => {
                     </div>
                 )}
 
-                {/* Transactions Cards */}
+                {showFilters && (<div className="bg-gray-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
+                    <h2 className="text-xl font-semibold text-white mb-4">فلتەرکردنی مامەڵەکان</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-white/80 mb-2">گەڕان بە ناوی کڕیار/فرۆشیار یان شەریک</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    name="searchQuery"
+                                    value={filters.searchQuery}
+                                    onChange={handleFilterInputChange}
+                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 pr-10"
+                                    placeholder="گەڕان..."
+                                />
+                                <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-white/80 mb-2">بارودۆخ</label>
+                            <Select
+                                name="status"
+                                options={[
+                                    { value: '', label: 'هەموو بارودۆخەکان' },
+                                    { value: 'Pending', label: 'قەرز' },
+                                    { value: 'Completed', label: 'واصڵ' },
+                                    { value: 'Cancelled', label: 'هەڵوەشاوە' }
+                                ]}
+                                value={[{ value: '', label: 'هەموو بارودۆخەکان' }, { value: 'Pending', label: 'قەرز' }, { value: 'Completed', label: 'واصڵ' }, { value: 'Cancelled', label: 'هەڵوەشاوە' }].find(option => option.value === filters.status) || null}
+                                onChange={handleFilterSelectChange}
+                                styles={selectStyles}
+                                placeholder="بارودۆخ دیاری بکە..."
+                                isClearable
+                                isSearchable
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-white/80 mb-2">شەریـک</label>
+                            <Select
+                                name="partner"
+                                options={[{ value: '', label: 'هەموو شەریکەکان' }, ...partnerOptions]}
+                                value={[{ value: '', label: 'هەموو شەریکەکان' }, ...partnerOptions].find(option => option.value === filters.partner) || null}
+                                onChange={handleFilterSelectChange}
+                                styles={selectStyles}
+                                placeholder="شەریک دیاری بکە.."
+                                isClearable
+                                isSearchable
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-white/80 mb-2">لە بەرواری</label>
+                            <input
+                                type="date"
+                                name="startDate"
+                                value={filters.startDate}
+                                onChange={handleFilterInputChange}
+                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-white/80 mb-2">بۆ بەرواری</label>
+                            <input
+                                type="date"
+                                name="endDate"
+                                value={filters.endDate}
+                                onChange={handleFilterInputChange}
+                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end mt-6">
+                        <button
+                            onClick={fetchFilteredTransactions}
+                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
+                        >
+                            <Search size={18} />
+                            گەڕان و فلتەر
+                        </button>
+                    </div>
+                </div>)}
+
                 <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     {transactions.length === 0 ? (
                         <div className="p-6 text-center text-white/60 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg md:col-span-2 lg:col-span-3">
@@ -506,7 +578,6 @@ const CryptoTransactions = () => {
                             <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-3 p-4">
                                 {transactions.map((transaction) => (
                                     <div key={transaction.id} className="bg-gray-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 flex flex-col justify-between">
-                                        {/* Top section: Type and Status */}
                                         <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/10">
                                             <div className="flex items-center gap-2">
                                                 {transaction.transaction_type === 'Buy' ? (
@@ -527,7 +598,6 @@ const CryptoTransactions = () => {
                                             </div>
                                         </div>
 
-                                        {/* Main details */}
                                         <div className="space-y-3 flex-grow">
                                             <div className="flex justify-between items-center">
                                                 <span className="text-white/80 text-sm">شەریک:</span>
@@ -551,7 +621,6 @@ const CryptoTransactions = () => {
                                             </div>
                                         </div>
 
-                                        {/* Actions */}
                                         <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-4">
                                             <button
                                                 onClick={() => handleDelete(transaction.id)}
@@ -568,8 +637,8 @@ const CryptoTransactions = () => {
                     )}
                 </div>
             </div>
+            
 
-            {/* Delete Confirmation Modal */}
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 w-full max-w-sm text-white">

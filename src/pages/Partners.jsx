@@ -16,7 +16,7 @@ const Partners = () => {
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
-        phone_number: '',
+        phone_number: null,
         is_system_owner: false,
         is_office: false,
         is_person: false

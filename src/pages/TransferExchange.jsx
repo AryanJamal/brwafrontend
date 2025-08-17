@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { User, Repeat2, Clock, DollarSign, ArrowLeftRight, Coins, Banknote } from 'lucide-react';
+import { User, Clock, DollarSign, ArrowLeftRight, Coins, Banknote } from 'lucide-react';
 import formatDate from '../components/formatdate';
 const ExchangeTypeChoices = {
     USD_TO_IQD: 'دۆلار بۆ دینار',
@@ -11,6 +11,7 @@ const TransferxExchange = () => {
     const [exchanges, setExchanges] = useState([]);
     const [partners, setPartners] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isAutoCalculateEnabled, setIsAutoCalculateEnabled] = useState(true);
     const [newExchange, setNewExchange] = useState({
         partner: '',
         exchange_type: 'USD_TO_IQD',
@@ -39,6 +40,8 @@ const TransferxExchange = () => {
         };
         fetchData();
     }, []);
+
+    
     // Handle changes in the form inputs
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -46,6 +49,45 @@ const TransferxExchange = () => {
             ...prevState,
             [name]: value,
         }));
+    };
+
+    // Handle changes in the amount fields with conditional calculation
+    const handleAmountChange = (e) => {
+        const { name, value } = e.target;
+        const rate = parseFloat(newExchange.exchange_rate);
+        const newValue = value.replace(/[^0-9.]/g, ''); // Sanitize input to only numbers and decimal point
+
+        // Update the state for the field that was just changed
+        setNewExchange(prevState => ({
+            ...prevState,
+            [name]: newValue,
+        }));
+
+        // If auto-calculation is off, just update the single field and return
+        if (!isAutoCalculateEnabled) {
+            return;
+        }
+
+        // Perform automatic calculation if the exchange rate is valid
+        if (rate > 0) {
+            if (name === 'usd_amount') {
+                const usd = parseFloat(newValue);
+                const iqd = Math.round(usd * rate);
+                setNewExchange(prevState => ({
+                    ...prevState,
+                    usd_amount: newValue,
+                    iqd_amount: isNaN(iqd) ? '' : iqd.toString(),
+                }));
+            } else if (name === 'iqd_amount') {
+                const iqd = parseFloat(newValue);
+                const usd = iqd / rate;
+                setNewExchange(prevState => ({
+                    ...prevState,
+                    iqd_amount: newValue,
+                    usd_amount: isNaN(usd) ? '' : usd.toFixed(2),
+                }));
+            }
+        }
     };
 
     // Handle form submission to create a new exchange
@@ -119,32 +161,6 @@ const TransferxExchange = () => {
                         </div>
 
                         <div>
-                            <label className="block text-white/80 mb-2">بڕی دۆلار</label>
-                            <input
-                                type="number"
-                                name="usd_amount"
-                                value={newExchange.usd_amount}
-                                onChange={handleInputChange}
-                                required
-                                step="1000"
-                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-white/80 mb-2">بڕی دینار</label>
-                            <input
-                                type="number"
-                                name="iqd_amount"
-                                value={newExchange.iqd_amount}
-                                onChange={handleInputChange}
-                                step="100000"
-                                required
-                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
-                            />
-                        </div>
-
-                        <div>
                             <label className="block text-white/80 mb-2">نرخی دۆلار</label>
                             <input
                                 type="number"
@@ -157,11 +173,46 @@ const TransferxExchange = () => {
                             />
                         </div>
 
-                        <div className="flex items-end">
+                        <div>
+                            <label className="block text-white/80 mb-2">بڕی دۆلار</label>
+                            <input
+                                type="number"
+                                name="usd_amount"
+                                value={newExchange.usd_amount}
+                                onChange={handleAmountChange}
+                                required
+                                step="1000"
+                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-white/80 mb-2">بڕی دینار</label>
+                            <input
+                                type="number"
+                                name="iqd_amount"
+                                value={newExchange.iqd_amount}
+                                onChange={handleAmountChange}
+                                step="100000"
+                                required
+                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
+                            />
+                        </div>
+
+                        <div className="flex flex-col items-start justify-center gap-2">
+                            <label className="flex items-center gap-2 text-white/80">
+                                <input
+                                    type="checkbox"
+                                    checked={isAutoCalculateEnabled}
+                                    onChange={(e) => setIsAutoCalculateEnabled(e.target.checked)}
+                                    className="form-checkbox text-blue-500 rounded-sm"
+                                />
+                                <span>کاراکردنی گۆڕینی ئۆتۆماتیکی</span>
+                            </label>
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all disabled:opacity-50"
+                                className="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all disabled:opacity-50 mt-auto"
                             >
                                 {isLoading ? 'ناردن...' : 'زیادکردن'}
                             </button>

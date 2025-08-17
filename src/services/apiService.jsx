@@ -3,6 +3,7 @@ import axios from 'axios';
 
 // Configure Axios defaults
 axios.defaults.baseURL = 'https://exchangesystem.onrender.com/api';
+// axios.defaults.baseURL = 'http://127.0.0.1:8000/api';
 axios.defaults.xsrfCookieName = 'csrftoken';
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
 axios.defaults.withCredentials = true;
@@ -59,10 +60,10 @@ export const api = {
     // Partners
     partners: {
         getAll: (params = {}) => apiClient.get('/partners', { params }),
-        getById: (id) => apiClient.get(`/partners/${id}`),
-        create: (data) => apiClient.post('/partners', data),
-        update: (id, data) => apiClient.put(`/partners/${id}`, data),
-        delete: (id) => apiClient.delete(`/partners/${id}`),
+        getById: (id) => apiClient.get(`/partners/${id}/`),
+        create: (data) => apiClient.post('/partners/', data),
+        update: (id, data) => apiClient.put(`/partners/${id}/`, data),
+        delete: (id) => apiClient.delete(`/partners/${id}/`),
     },
     
     // Crypto Transactions
