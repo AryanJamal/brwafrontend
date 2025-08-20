@@ -360,6 +360,8 @@ const CryptoTransactions = () => {
                             <div>
                                 <label className="block text-white/80 mb-2">شوێنی کریپتۆ</label>
                                 <Select
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
                                     name="crypto_safe"
                                     options={cryptoSafeOptions}
                                     value={cryptoSafeOptions.find(option => option.value === formData.crypto_safe) || null}
@@ -375,6 +377,8 @@ const CryptoTransactions = () => {
                                 <label className="block text-white/80 mb-2">شوێنی پارە</label>
                                 <Select
                                     name="payment_safe"
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
                                     options={paymentSafeOptions}
                                     value={paymentSafeOptions.find(option => option.value === formData.payment_safe) || null}
                                     onChange={handleSelectChange}
@@ -452,6 +456,8 @@ const CryptoTransactions = () => {
                                 <label className="block text-white/80 mb-2">شەریـک</label>
                                 <Select
                                     name="partner"
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
                                     options={partnerOptions}
                                     value={partnerOptions.find(option => option.value === formData.partner) || null}
                                     onChange={handleSelectChange}
@@ -506,6 +512,8 @@ const CryptoTransactions = () => {
                             <label className="block text-white/80 mb-2">بارودۆخ</label>
                             <Select
                                 name="status"
+                                menuPortalTarget={document.body}   // 👈 attach to body
+                                menuPosition="fixed"
                                 options={[
                                     { value: '', label: 'هەموو بارودۆخەکان' },
                                     { value: 'Pending', label: 'قەرز' },
@@ -525,6 +533,8 @@ const CryptoTransactions = () => {
                             <label className="block text-white/80 mb-2">شەریـک</label>
                             <Select
                                 name="partner"
+                                menuPortalTarget={document.body}   // 👈 attach to body
+                                menuPosition="fixed"
                                 options={[{ value: '', label: 'هەموو شەریکەکان' }, ...partnerOptions]}
                                 value={[{ value: '', label: 'هەموو شەریکەکان' }, ...partnerOptions].find(option => option.value === filters.partner) || null}
                                 onChange={handleFilterSelectChange}

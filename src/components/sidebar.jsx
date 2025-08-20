@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, Home, CreditCard } from "lucide-react";
+import { Menu, X, Home, CreditCard, Vault, HandCoins, ChartCandlestick, Repeat, FileInput, FileOutput, ArrowLeftRight, CircleUser} from "lucide-react";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,16 +8,16 @@ const Sidebar = () => {
 
   // Kurdish navigation items
   const navItems = [
-    { name: "سەرەکی", path: "/", icon: Home }, // "Home" in Kurdish
-    { name: "مامەڵەکان", path: "/transactions", icon: CreditCard }, // "Transactions" in Kurdish
-    { name: "جۆری قاسە", path: "/safe-types", icon: CreditCard }, // "Transactions" in Kurdish
-    { name: "حساباتی قاسەکان", path: "/safe-partners", icon: CreditCard }, // "Transactions" in Kurdish
-    { name: "کریپتۆ", path: "/crypto-transactions", icon: CreditCard }, // "Transactions" in Kurdish
-    { name: "ئاڵوگـۆڕ", path: "/exchange", icon: CreditCard }, // "Transactions" in Kurdish
-    { name: "حەواڵەی هاتوو" , path: "/incoming-money", icon: CreditCard }, // "Transactions" in Kurdish
-    { name: "حەواڵە کردن", path: "/outgoing-money", icon: CreditCard }, // "Transactions" in Kurdish
-    { name: "دانانی پارە", path: "/safe-transactions", icon: CreditCard }, // "Transactions" in Kurdish
-    { name: "شەریکەکان", path: "/partners", icon: CreditCard }, // "Transactions" in Kurdish
+    // { name: "سەرەکی", path: "/", icon: Home }, // "Home" in Kurdish
+    // { name: "مامەڵەکان", path: "/transactions", icon: CreditCard }, // "Transactions" in Kurdish
+    { name: "حساباتی قاسەکان", path: "/safe-partners", icon: HandCoins }, // "Transactions" in Kurdish
+    { name: "کریپتۆ", path: "/crypto-transactions", icon: ChartCandlestick }, // "Transactions" in Kurdish
+    { name: "حەواڵەی هاتوو" , path: "/incoming-money", icon: FileInput }, // "Transactions" in Kurdish
+    { name: "حەواڵە کردن", path: "/outgoing-money", icon: FileOutput }, // "Transactions" in Kurdish
+    { name: "ئاڵوگـۆڕ", path: "/exchange", icon: Repeat }, // "Transactions" in Kurdish
+    { name: "دانانی پارە", path: "/safe-transactions", icon: ArrowLeftRight }, // "Transactions" in Kurdish
+    { name: "شەریکەکان", path: "/partners", icon: CircleUser }, // "Transactions" in Kurdish
+    { name: "جۆری قاسە", path: "/safe-types", icon: Vault }, // "Transactions" in Kurdish
     // Add more Kurdish items as needed
   ];
 
@@ -81,7 +81,7 @@ const Sidebar = () => {
             <nav className="p-4 flex-grow">
               <ul className="space-y-2">
                 {navItems.map((item) => (
-                  <li key={item.name}>
+                  <li key={item.name} className="text-lg">
                     <NavLink
                       to={item.path}
                       onClick={() => isMobile && setIsOpen(false)}
@@ -95,7 +95,7 @@ const Sidebar = () => {
                         }`
                       }
                     >
-                      <item.icon size={20} />
+                      <item.icon size={28} className="text-slate-900 stroke-slate-900" />
                       <span>{item.name}</span>
                     </NavLink>
                   </li>

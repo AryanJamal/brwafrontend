@@ -346,6 +346,8 @@ const SafePartners = () => {
                                         </label>
                                         <Select
                                             id="partner_id"
+                                            menuPortalTarget={document.body}   // 👈 attach to body
+                                            menuPosition="fixed"
                                             name="partner_id"
                                             options={partners.map((partner) => ({
                                                 value: partner.id,
@@ -376,6 +378,8 @@ const SafePartners = () => {
                                         <Select
                                             id="safe_type_id"
                                             name="safe_type_id"
+                                            menuPortalTarget={document.body}   // 👈 attach to body
+                                            menuPosition="fixed"
                                             options={safeTypes.map((type) => ({
                                                 value: type.id,
                                                 label: `${type.name} (${type.type})`,

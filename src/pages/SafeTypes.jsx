@@ -182,7 +182,7 @@ const SafeTypes = () => {
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="border-b border-white/20">
+                        <thead className="border-b border-white/20 bg-slate-600/80">
                             <tr>
                                 <th className="px-6 py-3 text-right text-white/80 font-medium">ناو</th>
                                 <th className="px-6 py-3 text-right text-white/80 font-medium">جۆر</th>
@@ -198,7 +198,7 @@ const SafeTypes = () => {
                                 </tr>
                             ) : (
                                 safeTypes.map((safeType) => (
-                                    <tr key={safeType.id} className="bg-yellow-600/10 border-b border-white/10 hover:bg-black/15 transition ease-in-out">
+                                    <tr key={safeType.id} className="bg-slate-800/80 border-b border-white/10 hover:bg-slate-800/90 transition ease-in-out">
                                         <td className="px-6 py-4 text-white">{safeType.name}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${safeType.type === "Crypto"

@@ -208,14 +208,14 @@ const IncomingMoney = () => {
                     <h1 className="text-2xl font-bold text-white">حەواڵەی هاتوو</h1>
                     <div className="flex gap-2">
                         <button
-                            onClick={() => {setShowFilters(!showFilters), setShowForm(false)}}
+                            onClick={() => { setShowFilters(!showFilters), setShowForm(false) }}
                             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
                         >
                             {showFilters ? "لابردنی فلتەر" : "فلتەر کردن"}
                             <Filter size={18} />
                         </button>
                         <button
-                            onClick={() => {setShowForm(!showForm),setShowFilters(false)}}
+                            onClick={() => { setShowForm(!showForm), setShowFilters(false) }}
                             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
                         >
                             {showForm ? "لابردن" : "زیادکردن"}
@@ -250,6 +250,8 @@ const IncomingMoney = () => {
                                 <label className="block text-white/80 mb-2">جۆری مامەڵە:</label>
                                 <Select
                                     name="status"
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
                                     value={statusOptions.find(option => option.value === filters.status)}
                                     onChange={(selectedOption) => handleFilterSelectChange('status', selectedOption)}
                                     options={statusOptions}
@@ -278,9 +280,11 @@ const IncomingMoney = () => {
                                     className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                 />
                             </div>
-                             <div>
+                            <div>
                                 <label className="block text-white/80 mb-2">لە هاوبەش:</label>
                                 <Select
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
                                     name="fromPartner"
                                     value={partnerOptions.find(option => option.value === filters.fromPartner)}
                                     onChange={(selectedOption) => handleFilterSelectChange('fromPartner', selectedOption)}
@@ -290,9 +294,11 @@ const IncomingMoney = () => {
                                     styles={selectStyles}
                                 />
                             </div>
-                             <div>
+                            <div>
                                 <label className="block text-white/80 mb-2">بۆ هاوبەش:</label>
                                 <Select
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
                                     name="toPartner"
                                     value={partnerOptions.find(option => option.value === filters.toPartner)}
                                     onChange={(selectedOption) => handleFilterSelectChange('toPartner', selectedOption)}
@@ -329,6 +335,8 @@ const IncomingMoney = () => {
                                 <label className="block text-white/80 mb-2">هاتووە لە:</label>
                                 <Select
                                     name="from_partner"
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
                                     value={partnerOptions.find(option => option.value === formData.from_partner)}
                                     onChange={(selectedOption) => handleSelectChange('from_partner', selectedOption)}
                                     options={partnerOptions}
@@ -340,6 +348,8 @@ const IncomingMoney = () => {
                             <div>
                                 <label className="block text-white/80 mb-2">هاتووە بۆ:</label>
                                 <Select
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
                                     name="to_partner"
                                     value={partnerOptions.find(option => option.value === formData.to_partner)}
                                     onChange={(selectedOption) => handleSelectChange('to_partner', selectedOption)}
@@ -413,6 +423,8 @@ const IncomingMoney = () => {
                                 <label className="block text-white/80 mb-2">جۆری مامەڵە</label>
                                 <Select
                                     name="status"
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
                                     value={statusOptions.find(option => option.value === formData.status)}
                                     onChange={(selectedOption) => handleSelectChange('status', selectedOption)}
                                     options={statusOptions}
