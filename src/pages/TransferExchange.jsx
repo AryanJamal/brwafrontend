@@ -260,7 +260,7 @@ const TransferxExchange = () => {
                                         <div>
                                             <p className="text-sm text-white/80">بڕی دۆلار</p>
                                             <p className="text-white font-medium">
-                                                ${parseFloat(exchange.usd_amount).toFixed(2)}
+                                                ${parseFloat(exchange.usd_amount).toLocaleString()}
                                             </p>
                                         </div>
                                     </div>

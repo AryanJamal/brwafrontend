@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { ArrowDown, Filter, Search, ArrowUp, Clock, CheckCircle, XCircle, Wallet, DollarSign, Gift, FileText } from 'lucide-react';
+import { ArrowDown, Trash2, AlertTriangle, X,Filter, Search, ArrowUp, Clock, CheckCircle, XCircle, Wallet, DollarSign, Gift, FileText } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 import Select from 'react-select';
@@ -12,8 +12,8 @@ const OutgoingMoney = () => {
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentId, setCurrentId] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [transactionToDelete, setTransactionToDelete] = useState(null);
 
     const [filters, setFilters] = useState({
         searchQuery: '',
@@ -33,8 +33,8 @@ const OutgoingMoney = () => {
         from_number: '',
         status: 'Pending',
         taker_name: '',
-        my_bonus: '',
-        partner_bonus: '',
+        my_bonus: 0,
+        partner_bonus: 0,
         bonus_currency: 'USD',
         note: ''
     });
@@ -100,11 +100,7 @@ const OutgoingMoney = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (isEditing) {
-                await api.outgoingMoney.update(currentId, formData);
-            } else {
-                await api.outgoingMoney.create(formData);
-            }
+            await api.outgoingMoney.create(formData);
             await fetchTransactions();
             resetForm();
         } catch (err) {
@@ -112,34 +108,19 @@ const OutgoingMoney = () => {
         }
     };
 
-    const handleEdit = (transaction) => {
-        setFormData({
-            from_partner: transaction.from_partner?.id || '',
-            money_amount: transaction.money_amount,
-            currency: transaction.currency,
-            to_partner: transaction.to_partner?.id || '',
-            from_name: transaction.from_name || '',
-            from_number: transaction.from_number || '',
-            status: transaction.status,
-            taker_name: transaction.taker_name || '',
-            my_bonus: transaction.my_bonus,
-            partner_bonus: transaction.partner_bonus,
-            bonus_currency: transaction.bonus_currency,
-            note: transaction.note || ''
-        });
-        setIsEditing(true);
-        setCurrentId(transaction.id);
-        setShowForm(true);
+    const handleDelete = async (id) => {
+        setTransactionToDelete(id);
+        setShowDeleteModal(true);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this transaction?')) {
-            try {
-                await api.outgoingMoney.delete(id);
-                await fetchTransactions();
-            } catch (err) {
-                setError(err.message);
-            }
+    const confirmDelete = async () => {
+        try {
+            await api.outgoingMoney.delete(transactionToDelete);
+            setShowDeleteModal(false);
+            setTransactionToDelete(null);
+            await api.outgoingMoney.getAll();
+        } catch (err) {
+            setError(err.message);
         }
     };
 
@@ -153,13 +134,11 @@ const OutgoingMoney = () => {
             from_number: '',
             status: 'Pending',
             taker_name: '',
-            my_bonus: '',
-            partner_bonus: '',
+            my_bonus: 0,
+            partner_bonus: 0,
             bonus_currency: 'USD',
             note: ''
         });
-        setIsEditing(false);
-        setCurrentId(null);
         setShowForm(false);
     };
 
@@ -333,7 +312,7 @@ const OutgoingMoney = () => {
                     <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold text-white">
-                                {isEditing ? "گۆڕانکاری" : "زیادکردن"}
+                                {"زیادکردن"}
                             </h2>
                             <button onClick={resetForm} className="text-white/70 hover:text-white">
                                 <XCircle size={20} />
@@ -373,6 +352,7 @@ const OutgoingMoney = () => {
                                     options={partnerOptions}
                                     placeholder="دیاری بکە..."
                                     styles={selectStyles}
+                                    required
                                 />
                             </div>
                             <div>
@@ -406,10 +386,11 @@ const OutgoingMoney = () => {
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                     placeholder="ناوی وەرگر.."
+                                    required
                                 />
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">بڕی چوو:</label>
+                                <label className="block text-white/80 mb-2">بڕی حەواڵەکراو:</label>
                                 <input
                                     type="number"
                                     name="money_amount"
@@ -526,7 +507,7 @@ const OutgoingMoney = () => {
                                     type="submit"
                                     className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
                                 >
-                                    {isEditing ? "گۆڕانکاری" : "دروست کردن"}
+                                    {"دروست کردن"}
                                 </button>
                                 <button
                                     type="button"
@@ -634,16 +615,11 @@ const OutgoingMoney = () => {
                                         )}
                                         <div className="mt-4 pt-4 border-t border-white/10 flex justify-end gap-3">
                                             <button
-                                                onClick={() => handleEdit(transaction)}
-                                                className="text-white/70 hover:text-purple-400 transition-colors text-sm"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
                                                 onClick={() => handleDelete(transaction.id)}
-                                                className="text-white/70 hover:text-red-400 transition-colors text-sm"
+                                                className="text-white/70 hover:text-red-400 transition-colors p-2 rounded-full hover:bg-white/5"
+                                                title="Delete"
                                             >
-                                                Delete
+                                                <Trash2 size={18} />
                                             </button>
                                         </div>
                                     </div>
@@ -653,6 +629,37 @@ const OutgoingMoney = () => {
                     )}
                 </div>
             </div>
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 w-full max-w-sm text-white">
+                        <div className="flex flex-col items-center mb-4">
+                            <AlertTriangle size={48} className="text-red-400 mb-3" />
+                            <h3 className="text-xl font-bold mb-2 text-center">دڵنیای؟</h3>
+                            <p className="text-white/80 text-center">
+                                ئەم کارە هەڵناوەشێتەوە.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 justify-center mt-4">
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <CheckCircle size={18} /> دڵنیابوون
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <X size={18} /> هەڵوەشاندنەوە
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

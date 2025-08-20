@@ -52,8 +52,9 @@ const SafeTransactions = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await api.safeTransactions.create(formData);
-            setTransactions([res.data, ...transactions]);
+            await api.safeTransactions.create(formData);
+            const res = await api.safeTransactions.getAll()
+            setTransactions(res.data)
             resetForm();
         } catch (err) {
             setError(err.message);
@@ -301,7 +302,7 @@ const SafeTransactions = () => {
                                         <div className="text-sm">
                                             <p className="font-medium text-white/80">بڕی پارە</p>
                                             <p className="text-white">
-                                                {parseFloat(transaction.money_amount).toFixed(2)} {transaction.currency}
+                                                {parseFloat(transaction.money_amount).toLocaleString()} {transaction.currency}
                                             </p>
                                         </div>
                                     </div>
