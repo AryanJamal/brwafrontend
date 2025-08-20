@@ -30,7 +30,7 @@ function App() {
       {/* Main content with proper margin */}
       <main className="md:mr-70 transition-all duration-300 p-4 md:p-8 min-h-screen">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<SafePartners />} />
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/safe-types" element={<SafeTypes />} />
             <Route path="/safe-partners" element={<SafePartners />} />

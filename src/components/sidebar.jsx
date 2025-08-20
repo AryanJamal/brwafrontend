@@ -105,7 +105,7 @@ const Sidebar = () => {
             
             {/* Footer with Kurdish text */}
             <div className="p-4 border-t border-white/10 text-white/50 text-sm">
-              © 2025 کۆمپانیای ئێوە {/* "Your Company" in Kurdish */}
+              © 2025 کۆمپانیای ىڕوا {/* "Your Company" in Kurdish */}
             </div>
           </div>
         </div>
