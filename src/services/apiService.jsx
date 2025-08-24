@@ -2,7 +2,8 @@
 import axios from 'axios';
 
 // Configure Axios defaults
-axios.defaults.baseURL = 'https://exchangesystem.onrender.com/api';
+axios.defaults.baseURL = 'http://brwa-exchange.com/api';
+// for local:
 // axios.defaults.baseURL = 'http://127.0.0.1:8000/api';
 axios.defaults.xsrfCookieName = 'csrftoken';
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -16,20 +17,30 @@ const apiClient = axios.create({
     },
 });
 
-// Request interceptor
-apiClient.interceptors.request.use(
-    (config) => {
-        // You can add auth token here if needed
-        // const token = localStorage.getItem('token');
-        // if (token) {
-        //     config.headers.Authorization = `Bearer ${token}`;
-        // }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+// CSRF header setup
+apiClient.interceptors.request.use((config) => {
+    const csrfToken = getCookie("csrftoken");
+    if (csrfToken) {
+        config.headers["X-CSRFToken"] = csrfToken;
     }
-);
+    return config;
+});
+
+// Utility to get cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
 // Response interceptor
 apiClient.interceptors.response.use(
@@ -56,7 +67,7 @@ export const api = {
         update: (id, data) => apiClient.put(`/safe-types/${id}`, data),
         delete: (id) => apiClient.delete(`/safe-types/${id}`),
     },
-    
+
     // Partners
     partners: {
         getAll: (params = {}) => apiClient.get('/partners', { params }),
@@ -65,7 +76,7 @@ export const api = {
         update: (id, data) => apiClient.put(`/partners/${id}/`, data),
         delete: (id) => apiClient.delete(`/partners/${id}/`),
     },
-    
+
     // Crypto Transactions
     cryptoTransactions: {
         getAll: (params = {}) => apiClient.get('/crypto-transactions/', { params }),
@@ -74,7 +85,7 @@ export const api = {
         update: (id, data) => apiClient.put(`/crypto-transactions/${id}/`, data),
         delete: (id) => apiClient.delete(`/crypto-transactions/${id}/`),
     },
-    
+
     // Transfer Exchanges
     transferExchanges: {
         getAll: (params = {}) => apiClient.get('/transfer-exchanges', { params }),
@@ -83,7 +94,7 @@ export const api = {
         update: (id, data) => apiClient.put(`/transfer-exchanges/${id}/`, data),
         delete: (id) => apiClient.delete(`/transfer-exchanges/${id}/`),
     },
-    
+
     // Incoming Money
     incomingMoney: {
         getAll: (params = {}) => apiClient.get('/incoming-money', { params }),
@@ -92,14 +103,14 @@ export const api = {
         update: (id, data) => apiClient.put(`/incoming-money/${id}/`, data),
         delete: (id) => apiClient.delete(`/incoming-money/${id}/`),
     },
-    safePartnersApi:  {
+    safePartnersApi: {
         getAll: () => apiClient.get('/safe-partners'),
         getById: (id) => apiClient.get(`/safe-partners/${id}/`),
         create: (data) => apiClient.post('/safe-partners/', data),
         update: (id, data) => apiClient.put(`/safe-partners/${id}/`, data),
         delete: (id) => apiClient.delete(`/safe-partners/${id}/`),
     },
-    
+
     // Outgoing Money
     outgoingMoney: {
         getAll: (params = {}) => apiClient.get('/outgoing-money', { params }),
@@ -108,7 +119,7 @@ export const api = {
         update: (id, data) => apiClient.put(`/outgoing-money/${id}/`, data),
         delete: (id) => apiClient.delete(`/outgoing-money/${id}/`),
     },
-    
+
     // Safe Transactions
     safeTransactions: {
         getAll: (params = {}) => apiClient.get('/safe-transactions', { params }),
@@ -117,7 +128,7 @@ export const api = {
         update: (id, data) => apiClient.put(`/safe-transactions/${id}/`, data),
         delete: (id) => apiClient.delete(`/safe-transactions/${id}/`),
     },
-    
+
     // Additional utility methods
     testConnection: async () => {
         try {
@@ -129,7 +140,7 @@ export const api = {
             return false;
         }
     },
-    
+
     // Add any custom endpoints or methods here
 };
 
@@ -143,11 +154,11 @@ export const safeTypesApi = {
     delete: (id) => apiClient.delete(`/safe-types/${id}/`),
 };
 export const safePartnersApi = {
-  getAll: () => apiClient.get('/safe-partners'),
-  getById: (id) => apiClient.get(`/safe-partners/${id}/`),
-  create: (data) => apiClient.post('/safe-partners/', data),
-  update: (id, data) => apiClient.put(`/safe-partners/${id}/`, data),
-  delete: (id) => apiClient.delete(`/safe-partners/${id}/`),
+    getAll: () => apiClient.get('/safe-partners'),
+    getById: (id) => apiClient.get(`/safe-partners/${id}/`),
+    create: (data) => apiClient.post('/safe-partners/', data),
+    update: (id, data) => apiClient.put(`/safe-partners/${id}/`, data),
+    delete: (id) => apiClient.delete(`/safe-partners/${id}/`),
 };
 
 
