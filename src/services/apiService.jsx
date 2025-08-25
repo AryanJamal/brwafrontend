@@ -2,11 +2,12 @@
 import axios from 'axios';
 
 // Configure Axios defaults
-axios.defaults.baseURL = 'http://brwa-exchange.com/api';
+// axios.defaults.baseURL = 'https://brwa-exchange.com/api';
 // for local:
-// axios.defaults.baseURL = 'http://127.0.0.1:8000/api';
+axios.defaults.baseURL = 'http://127.0.0.1:8000/api';
 axios.defaults.xsrfCookieName = 'csrftoken';
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
+axios.defaults.timeout = 30000; // 30 second timeout
 axios.defaults.withCredentials = true;
 
 // Create an Axios instance with custom config
@@ -14,49 +15,59 @@ const apiClient = axios.create({
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
     },
+
 });
 
-// CSRF header setup
-apiClient.interceptors.request.use((config) => {
-    const csrfToken = getCookie("csrftoken");
-    if (csrfToken) {
-        config.headers["X-CSRFToken"] = csrfToken;
-    }
-    return config;
-});
-
-// Utility to get cookies
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-        const cookies = document.cookie.split(";");
-        for (let cookie of cookies) {
-            cookie = cookie.trim();
-            if (cookie.startsWith(name + "=")) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+// Request interceptor for Safari compatibility
+apiClient.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem("access");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
-    }
-    return cookieValue;
-}
 
+        // Add timestamp to prevent caching issues in Safari
+        if (config.method === 'get') {
+            config.params = {
+                ...config.params,
+                _t: Date.now()
+            };
+        }
+
+        return config;
+    },
+    (error) => {
+        console.error('Request interceptor error:', error);
+        return Promise.reject(error);
+    }
+);
 // Response interceptor
 apiClient.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response) {
-            console.error('API Error:', error.response.status, error.response.data);
-        } else if (error.request) {
-            console.error('API Error: No response received');
-        } else {
-            console.error('API Error:', error.message);
+    async (error) => {
+        const originalRequest = error.config;
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+
+            try {
+                const refresh = localStorage.getItem("refresh");
+                const res = await axios.post("http://127.0.0.1:8000/api/token/refresh/", { refresh });
+
+                localStorage.setItem("access", res.data.access);
+                apiClient.defaults.headers.common["Authorization"] = `Bearer ${res.data.access}`;
+
+                return apiClient(originalRequest); // ✅ retry with new token
+            } catch {
+                localStorage.clear();
+                window.location.href = "/login";
+            }
         }
         return Promise.reject(error);
     }
 );
-
 // API endpoints configuration
 export const api = {
     // Safe Types
@@ -66,6 +77,10 @@ export const api = {
         create: (data) => apiClient.post('/safe-types', data),
         update: (id, data) => apiClient.put(`/safe-types/${id}`, data),
         delete: (id) => apiClient.delete(`/safe-types/${id}`),
+    },
+    token: {
+        post: (data) => apiClient.post('/token/', data),
+        postrefresh: (data) => apiClient.post(`/token/refresh`, data),
     },
 
     // Partners
@@ -84,6 +99,20 @@ export const api = {
         create: (data) => apiClient.post('/crypto-transactions/', data),
         update: (id, data) => apiClient.put(`/crypto-transactions/${id}/`, data),
         delete: (id) => apiClient.delete(`/crypto-transactions/${id}/`),
+    },
+    debt: {
+        getAll: (params = {}) => apiClient.get('/debts/', { params }),
+        getById: (id) => apiClient.get(`/debts/${id}/`),
+        create: (data) => apiClient.post('/debts/', data),
+        update: (id, data) => apiClient.put(`/debts/${id}/`, data),
+        delete: (id) => apiClient.delete(`/debts/${id}/`),
+    },
+    debtrepayment: {
+        getAll: (params = {}) => apiClient.get('/debt-repayments/', { params }),
+        getById: (id) => apiClient.get(`/debt-repayments/${id}/`),
+        create: (data) => apiClient.post('/debt-repayments/', data),
+        update: (id, data) => apiClient.put(`/debt-repayments/${id}/`, data),
+        delete: (id) => apiClient.delete(`/debt-repayments/${id}/`),
     },
 
     // Transfer Exchanges

@@ -1,0 +1,12 @@
+{
+    "name": "Brwa",
+    "short_name": "Brwa",
+    "display": "fullscreen",
+    "icons": [
+        {
+            "src": "/brwa.jpg",
+            "sizes": "180x180",
+            "type": "image/jpeg"
+        }
+    ]
+}
