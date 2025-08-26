@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
 
             try {
                 const refresh = localStorage.getItem("refresh");
-                const res = await axios.post("http://127.0.0.1:8000/api/token/refresh/", { refresh });
+                const res = await axios.post("https://brwa-exchange.com/api/token/refresh/", { refresh });
 
                 localStorage.setItem("access", res.data.access);
                 apiClient.defaults.headers.common["Authorization"] = `Bearer ${res.data.access}`;
@@ -122,6 +122,11 @@ export const api = {
         create: (data) => apiClient.post('/transfer-exchanges/', data),
         update: (id, data) => apiClient.put(`/transfer-exchanges/${id}/`, data),
         delete: (id) => apiClient.delete(`/transfer-exchanges/${id}/`),
+    },
+    bonuses: {
+        getDaily: () => apiClient.get('/bonuses/today/'),
+        getMonthly: () => apiClient.get('/bonuses/month/'),
+        // Add more bonus-related endpoints as needed
     },
 
     // Incoming Money

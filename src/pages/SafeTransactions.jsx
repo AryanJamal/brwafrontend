@@ -11,6 +11,7 @@ const SafeTransactions = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [formData, setFormData] = useState({
         partner: '',
@@ -34,6 +35,8 @@ const SafeTransactions = () => {
             } catch (err) {
                 setError(err.message);
                 setLoading(false);
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -50,6 +53,8 @@ const SafeTransactions = () => {
     };
 
     const handleSubmit = async (e) => {
+        if (isLoading) return;
+        setIsLoading(true);
         e.preventDefault();
         try {
             await api.safeTransactions.create(formData);
@@ -253,9 +258,10 @@ const SafeTransactions = () => {
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="submit"
+                                    disabled={isLoading}
                                     className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
                                 >
-                                    {"زیادکردن"}
+                                    {isLoading ? 'ناردن...' : 'زیادکردن'}
                                 </button>
                                 <button
                                     type="button"

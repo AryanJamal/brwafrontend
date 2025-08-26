@@ -1,7 +1,8 @@
 {
     "name": "Brwa",
     "short_name": "Brwa",
-    "display": "fullscreen",
+    "theme_color": "#707888",
+    "display": "standalone",
     "icons": [
         {
             "src": "/brwa.jpg",

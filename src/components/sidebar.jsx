@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, HandCoins, ChartCandlestick, FileInput, FileOutput, Repeat, ArrowLeftRight, CircleUser, Vault, CircleSlash2, LogOut } from "lucide-react";
+import { Menu, X, HandCoins, ListTodoIcon, ChartCandlestick, FileInput, FileOutput, Repeat, ArrowLeftRight, CircleUser, Vault, CircleSlash2, LogOut } from "lucide-react";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +18,7 @@ const Sidebar = () => {
     { name: "شەریکەکان", path: "/partners", icon: CircleUser },
     { name: "جۆری قاسە", path: "/safe-types", icon: Vault },
     { name: " قەرز", path: "/debts", icon: CircleSlash2 },
+    { name: " داشبۆرد", path: "/dashboard", icon: ListTodoIcon },
   ];
 
   useEffect(() => {

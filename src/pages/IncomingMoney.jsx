@@ -1,17 +1,24 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select'; // Import Select from react-select
 import { api } from '../services/apiService';
-import { ArrowDown, ArrowUp, Clock, Filter, Search, CheckCircle, XCircle, Wallet, DollarSign, Gift, FileText } from 'lucide-react';
+import { ArrowDown, ArrowUp, AlertTriangle, X, Clock, Filter, Search, CheckCircle, Trash2, XCircle, Wallet, DollarSign, Gift, FileText, Trash } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 
 const IncomingMoney = () => {
     const [transactions, setTransactions] = useState([]);
+    const [count, setCount] = useState(0);  // total results
+    const [page, setPage] = useState(1);    // current page
+    // eslint-disable-next-line no-unused-vars
+    const [pageSize, setPageSize] = useState(30); // items per page
     const [partners, setPartners] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showConfirmModal2, setShowConfirmModal2] = useState(false);
+    const [partnerToDeleteId, setPartnerToDeleteId] = useState(null);
 
     const [filters, setFilters] = useState({
         searchQuery: '',
@@ -30,8 +37,8 @@ const IncomingMoney = () => {
         to_name: '',
         to_number: '',
         status: 'Pending',
-        my_bonus: '',
-        partner_bonus: '',
+        my_bonus: '0',
+        partner_bonus: '0',
         bonus_currency: 'USD',
         note: ''
     });
@@ -39,28 +46,24 @@ const IncomingMoney = () => {
     const fetchTransactions = async () => {
         setLoading(true);
         try {
-            const queryParams = {};
-            if (filters.searchQuery.trim()) {
-                queryParams.search = filters.searchQuery.trim();
-            }
-            if (filters.status) {
-                queryParams.status = filters.status;
-            }
-            if (filters.startDate) {
-                queryParams.start_date = filters.startDate;
-            }
-            if (filters.endDate) {
-                queryParams.end_date = filters.endDate;
-            }
-            if (filters.fromPartner) {
-                queryParams.from_partner = filters.fromPartner;
-            }
-            if (filters.toPartner) {
-                queryParams.to_partner = filters.toPartner;
-            }
+            const queryParams = {
+                page,
+                page_size: pageSize,
+            };
+
+            // add filters
+            if (filters.searchQuery.trim()) queryParams.search = filters.searchQuery.trim();
+            if (filters.status) queryParams.status = filters.status;
+            if (filters.startDate) queryParams.start_date = filters.startDate;
+            if (filters.endDate) queryParams.end_date = filters.endDate;
+            if (filters.fromPartner) queryParams.from_partner = filters.fromPartner;
+            if (filters.toPartner) queryParams.to_partner = filters.toPartner;
 
             const transRes = await api.incomingMoney.getAll(queryParams);
-            setTransactions(transRes.data);
+
+            // DRF pagination returns {count, next, previous, results}
+            setTransactions(transRes.data.results);
+            setCount(transRes.data.count);
             setLoading(false);
         } catch (err) {
             setError(err.message);
@@ -82,7 +85,7 @@ const IncomingMoney = () => {
         };
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [page, pageSize]);
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -107,26 +110,10 @@ const IncomingMoney = () => {
         setFormData(prev => ({ ...prev, [name]: selectedOption ? selectedOption.value : '' }));
     };
 
-    const handleComplete = async (id) => {
-        try {
-            await api.incomingMoney.update(id, { status: 'Completed' });
-            await fetchTransactions();
-        } catch (err) {
-            console.error("Failed to update status:", err);
-            setError("Failed to update status.");
-        }
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const partnerId = formData.from_partner;
-            const partner = partners.find(p => p.id === partnerId);
-            const dataToSend = {
-                ...formData,
-                from_partner: partner ? { partner: { name: partner.partner.name } } : null
-            };
-            await api.incomingMoney.create(dataToSend);
+            await api.incomingMoney.create(formData);
             await fetchTransactions();
             resetForm();
         } catch (err) {
@@ -134,14 +121,44 @@ const IncomingMoney = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this transaction?')) {
-            try {
-                await api.incomingMoney.delete(id);
-                await fetchTransactions();
-            } catch (err) {
-                setError(err.message);
-            }
+    const handleDelete = (id) => {
+        setPartnerToDeleteId(id);
+        setShowConfirmModal(true);
+    };
+
+    // Confirm and execute the partner deletion
+    const confirmDelete = async () => {
+        try {
+            await api.incomingMoney.delete(partnerToDeleteId);
+            await fetchTransactions();
+
+        } catch (err) {
+            console.error("Deletion error:", err);
+            // Optionally, set an error state to display to the user
+        } finally {
+            // Ensure the modal closes and state is reset regardless of success or failure
+            setShowConfirmModal(false);
+            setPartnerToDeleteId(null);
+        }
+    };
+    const handleComplete = (id) => {
+        setPartnerToDeleteId(id);
+        setShowConfirmModal2(true);
+    };
+
+    // Confirm and execute the partner deletion
+    const confirmComplete = async () => {
+        try {
+            await api.incomingMoney.update(partnerToDeleteId, { status: 'Completed' });
+            await fetchTransactions();
+
+        } catch (err) {
+            console.error("Deletion error:", err);
+            // Optionally, set an error state to display to the user
+        } finally {
+            // Ensure the modal closes and state is reset regardless of success or failure
+            setShowConfirmModal2(false);
+            setPartnerToDeleteId(null);
         }
     };
 
@@ -150,12 +167,12 @@ const IncomingMoney = () => {
             from_partner: '',
             money_amount: '',
             currency: 'USD',
-            to_partner: '',
+            to_partner: null,
             to_name: '',
             to_number: '',
             status: 'Pending',
-            my_bonus: '',
-            partner_bonus: '',
+            my_bonus: '0',
+            partner_bonus: '0',
             bonus_currency: 'USD',
             note: ''
         });
@@ -439,8 +456,6 @@ const IncomingMoney = () => {
                                     value={formData.my_bonus}
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    step="0.01"
-                                    min="0"
                                 />
                             </div>
                             <div>
@@ -451,8 +466,6 @@ const IncomingMoney = () => {
                                     value={formData.partner_bonus}
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    step="0.01"
-                                    min="0"
                                 />
                             </div>
                             <div>
@@ -565,13 +578,13 @@ const IncomingMoney = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        {(transaction.my_bonus > 0 || transaction.partner_bonus > 0) && (
+                                        {(transaction.my_bonus != 0 || transaction.partner_bonus != 0) && (
                                             <div className="bg-white/5 rounded-lg p-3 mb-4">
                                                 <h4 className="text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
                                                     <Gift size={16} /> عمولەکان
                                                 </h4>
                                                 <div className="grid grid-cols-2 gap-2">
-                                                    {transaction.my_bonus > 0 && (
+                                                    {transaction.my_bonus != 0 && (
                                                         <div>
                                                             <p className="text-xs text-white/70">عمولەی دوکان</p>
                                                             <p className="text-white">
@@ -579,7 +592,7 @@ const IncomingMoney = () => {
                                                             </p>
                                                         </div>
                                                     )}
-                                                    {transaction.partner_bonus > 0 && (
+                                                    {transaction.partner_bonus != 0 && (
                                                         <div>
                                                             <p className="text-xs text-white/70">عمولە بۆ نوسینگە</p>
                                                             <p className="text-white">
@@ -605,14 +618,14 @@ const IncomingMoney = () => {
                                                     onClick={() => handleComplete(transaction.id)}
                                                     className="text-white/70 hover:text-green-400 transition-colors text-sm"
                                                 >
-                                                    Complete
+                                                    <CheckCircle size={22} />
                                                 </button>
                                             )}
                                             <button
                                                 onClick={() => handleDelete(transaction.id)}
                                                 className="text-white/70 hover:text-red-400 transition-colors text-sm"
                                             >
-                                                Delete
+                                                <Trash2 size={22} />
                                             </button>
                                         </div>
                                     </div>
@@ -622,7 +635,91 @@ const IncomingMoney = () => {
                     )}
                 </div>
             </div>
+            {showConfirmModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 w-full max-w-sm text-white">
+                        <div className="flex flex-col items-center mb-4">
+                            <AlertTriangle size={48} className="text-red-400 mb-3" />
+                            <h3 className="text-xl font-bold mb-2 text-center">دڵنیای؟</h3>
+                            <p className="text-white/80 text-center">
+                                ئەم کارە هەڵناوەشێتەوە.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 justify-center mt-4">
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <CheckCircle size={18} /> دڵنیابوون
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setShowConfirmModal(false)}
+                                className="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <X size={18} /> هەڵوەشاندنەوە
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showConfirmModal2 && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 w-full max-w-sm text-white">
+                        <div className="flex flex-col items-center mb-4">
+                            <AlertTriangle size={48} className="text-red-400 mb-3" />
+                            <h3 className="text-xl font-bold mb-2 text-center">دڵنیای؟</h3>
+                            <p className="text-white/80 text-center">
+                                ئەم هەڵناوەشێتەوە.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 justify-center mt-4">
+                            <button
+                                onClick={confirmComplete}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <CheckCircle size={18} /> دڵنیابوون
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setShowConfirmModal2(false)}
+                                className="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <X size={18} /> هەڵوەشاندنەوە
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {count > pageSize && (
+                <div className="flex justify-center items-center gap-4 mt-6 text-white">
+                    <button
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
+                        className="px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40"
+                    >
+                        پێشوو
+                    </button>
+                    <span>
+                        پەڕە {page} لە {Math.ceil(count / pageSize)}
+                    </span>
+                    <button
+                        disabled={page >= Math.ceil(count / pageSize)}
+                        onClick={() => setPage(page + 1)}
+                        className="px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40"
+                    >
+                        داهاتوو
+                    </button>
+                </div>
+            )}
         </div>
+
     );
 };
 

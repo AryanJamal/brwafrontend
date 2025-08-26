@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { ArrowDown, Trash2, AlertTriangle, X,Filter, Search, ArrowUp, Clock, CheckCircle, XCircle, Wallet, DollarSign, Gift, FileText } from 'lucide-react';
+import { ArrowDown, Trash2, AlertTriangle, X, Filter, Search, ArrowUp, Clock, CheckCircle, XCircle, Wallet, DollarSign, Gift, FileText } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 import Select from 'react-select';
 
 const OutgoingMoney = () => {
     const [transactions, setTransactions] = useState([]);
+    const [count, setCount] = useState(0);  // total results
+    const [page, setPage] = useState(1);    // current page
+    // eslint-disable-next-line no-unused-vars
+    const [pageSize, setPageSize] = useState(30); // items per page
     const [partners, setPartners] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -14,6 +18,7 @@ const OutgoingMoney = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [transactionToDelete, setTransactionToDelete] = useState(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const [filters, setFilters] = useState({
         searchQuery: '',
@@ -42,7 +47,10 @@ const OutgoingMoney = () => {
     const fetchTransactions = async () => {
         setLoading(true);
         try {
-            const queryParams = {};
+            const queryParams = {
+                page,
+                page_size: pageSize,
+            };
             if (filters.searchQuery.trim()) {
                 queryParams.search = filters.searchQuery.trim();
             }
@@ -64,6 +72,7 @@ const OutgoingMoney = () => {
 
             const transRes = await api.outgoingMoney.getAll(queryParams);
             setTransactions(transRes.data);
+            setCount(transRes.data.count);
             setLoading(false);
         } catch (err) {
             setError(err.message);
@@ -85,7 +94,7 @@ const OutgoingMoney = () => {
         };
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [page, pageSize]);
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -121,6 +130,27 @@ const OutgoingMoney = () => {
             await api.outgoingMoney.getAll();
         } catch (err) {
             setError(err.message);
+        }
+    };
+
+    const handleComplete = (id) => {
+        setTransactionToDelete(id);
+        setShowConfirmModal(true);
+    };
+
+    // Confirm and execute the partner deletion
+    const confirmComplete = async () => {
+        try {
+            await api.outgoingMoney.update(transactionToDelete, { status: 'Completed' });
+            await fetchTransactions();
+
+        } catch (err) {
+            console.error("Deletion error:", err);
+            // Optionally, set an error state to display to the user
+        } finally {
+            // Ensure the modal closes and state is reset regardless of success or failure
+            setShowConfirmModal(false);
+            setTransactionToDelete(null);
         }
     };
 
@@ -451,8 +481,6 @@ const OutgoingMoney = () => {
                                     value={formData.my_bonus}
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    step="0.01"
-                                    min="0"
                                 />
                             </div>
                             <div>
@@ -463,8 +491,6 @@ const OutgoingMoney = () => {
                                     value={formData.partner_bonus}
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    step="0.01"
-                                    min="0"
                                 />
                             </div>
                             <div>
@@ -579,13 +605,13 @@ const OutgoingMoney = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        {(transaction.my_bonus > 0 || transaction.partner_bonus > 0) && (
+                                        {(transaction.my_bonus != 0 || transaction.partner_bonus != 0) && (
                                             <div className="bg-white/5 rounded-lg p-3 mb-4">
                                                 <h4 className="text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
                                                     <Gift size={16} /> عمولەکان
                                                 </h4>
                                                 <div className="grid grid-cols-2 gap-2">
-                                                    {transaction.my_bonus > 0 && (
+                                                    {transaction.my_bonus != 0 && (
                                                         <div>
                                                             <p className="text-xs text-white/70">عمولەی دوکان</p>
                                                             <p className="text-white">
@@ -593,7 +619,7 @@ const OutgoingMoney = () => {
                                                             </p>
                                                         </div>
                                                     )}
-                                                    {transaction.partner_bonus > 0 && (
+                                                    {transaction.partner_bonus != 0 && (
                                                         <div>
                                                             <p className="text-xs text-white/70">عمولە بۆ نوسینگە</p>
                                                             <p className="text-white">
@@ -614,12 +640,20 @@ const OutgoingMoney = () => {
                                             </div>
                                         )}
                                         <div className="mt-4 pt-4 border-t border-white/10 flex justify-end gap-3">
+                                            {transaction.status === 'Pending' && (
+                                                <button
+                                                    onClick={() => handleComplete(transaction.id)}
+                                                    className="text-white/70 hover:text-green-400 transition-colors text-sm"
+                                                >
+                                                    <CheckCircle size={22} />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => handleDelete(transaction.id)}
                                                 className="text-white/70 hover:text-red-400 transition-colors p-2 rounded-full hover:bg-white/5"
                                                 title="Delete"
                                             >
-                                                <Trash2 size={18} />
+                                                <Trash2 size={22} />
                                             </button>
                                         </div>
                                     </div>
@@ -658,6 +692,58 @@ const OutgoingMoney = () => {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+            {showConfirmModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 w-full max-w-sm text-white">
+                        <div className="flex flex-col items-center mb-4">
+                            <AlertTriangle size={48} className="text-red-400 mb-3" />
+                            <h3 className="text-xl font-bold mb-2 text-center">دڵنیای؟</h3>
+                            <p className="text-white/80 text-center">
+                                ئەم کارە هەڵناوەشێتەوە.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 justify-center mt-4">
+                            <button
+                                onClick={confirmComplete}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <CheckCircle size={18} /> دڵنیابوون
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setShowConfirmModal(false)}
+                                className="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <X size={18} /> هەڵوەشاندنەوە
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {count > pageSize && (
+                <div className="flex justify-center items-center gap-4 mt-6 text-white">
+                    <button
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
+                        className="px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40"
+                    >
+                        پێشوو
+                    </button>
+                    <span>
+                        پەڕە {page} لە {Math.ceil(count / pageSize)}
+                    </span>
+                    <button
+                        disabled={page >= Math.ceil(count / pageSize)}
+                        onClick={() => setPage(page + 1)}
+                        className="px-3 py-1 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40"
+                    >
+                        داهاتوو
+                    </button>
                 </div>
             )}
         </div>

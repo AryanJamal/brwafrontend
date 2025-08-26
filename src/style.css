@@ -9,3 +9,9 @@
         margin-top: calc(var(--spacing) * 6) /* 1.5rem = 24px */;
     }
 }
+
+.xsm\:grid-cols-1 {
+    @media (width < 40rem /* 768px */) {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+}

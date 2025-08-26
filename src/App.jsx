@@ -13,6 +13,7 @@ import SafeTransactions from './pages/SafeTransactions';
 import Partners from './pages/Partners';
 import Debts from './pages/Debts';
 import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   const [auth, setAuth] = useState(false);
@@ -37,16 +38,17 @@ function App() {
           <Sidebar />
           <main className="md:mr-70 transition-all duration-300 p-4 md:p-8 min-h-screen">
             <Routes>
-              <Route path="/" element={<SafePartners />} />
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/safe-partners" element={<SafePartners />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/safe-types" element={<SafeTypes />} />
-              <Route path="/safe-partners" element={<SafePartners />} />
               <Route path="/crypto-transactions" element={<CryptoTransactions />} />
               <Route path="/exchange" element={<TransferxExchange />} />
               <Route path="/incoming-money" element={<IncomingMoney />} />
               <Route path="/outgoing-money" element={<OutgoingMoney />} />
               <Route path="/safe-transactions" element={<SafeTransactions />} />
               <Route path="/partners" element={<Partners />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/debts" element={<Debts />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
