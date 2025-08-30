@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { api } from '../services/apiService';
-import { Plus, X, Coins, CheckCircle, DollarSign, Filter,Gift, AlertTriangle, Wallet, Edit, Trash2, Check, ArrowUp, ArrowDown, Clock, XCircle, Search } from 'lucide-react';
+import { Plus, X, Coins, UserRound, CheckCircle, DollarSign, Filter, Gift, AlertTriangle, Wallet, Edit, Trash2, Check, ArrowUp, ArrowDown, Clock, XCircle, Search } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 const CryptoTransactions = () => {
@@ -11,6 +11,7 @@ const CryptoTransactions = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const [bonus, setBonus] = useState(0);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [transactionToDelete, setTransactionToDelete] = useState(null);
@@ -20,7 +21,7 @@ const CryptoTransactions = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [formData, setFormData] = useState({
         transaction_type: 'Buy',
-        partner: '',
+        partner: null,
         usdt_amount: '',
         usdt_price: '',
         crypto_safe: '',
@@ -29,7 +30,8 @@ const CryptoTransactions = () => {
         status: 'Pending',
         payment_safe: '',
         currency: 'USD',
-        client_name: ''
+        client_name: '',
+        partner_client: null
     });
 
     const [filters, setFilters] = useState({
@@ -59,6 +61,20 @@ const CryptoTransactions = () => {
         value: partner.id,
         label: `${partner.partner.name} - ${partner.safe_type.name}`
     }));
+    const partnerOptionsMap = new Map();
+
+    // Iterate over the partners array
+    partners.forEach(partner => {
+        const name = partner.partner.name;
+        // Use the name as the key and store the whole option object as the value
+        partnerOptionsMap.set(name, {
+            value: partner.partner.id,
+            label: `${name}`
+        });
+    });
+
+    // Convert the values of the Map back into an array to get the unique options
+    const partnerOptions2 = Array.from(partnerOptionsMap.values());
 
     const fetchInitialData = async () => {
         try {
@@ -166,11 +182,11 @@ const CryptoTransactions = () => {
     };
 
     // Confirm and execute the partner deletion
-    const confirmComplete = async () => {
+    const confirmComplete = async (bonusValue) => {
         try {
-            await api.cryptoTransactions.update(transactionToDelete, { status: 'Completed' });
+            await api.cryptoTransactions.update(transactionToDelete, { status: 'Completed', bonus: bonusValue });
             await fetchFilteredTransactions();
-            
+
         } catch (err) {
             console.error("Deletion error:", err);
             // Optionally, set an error state to display to the user
@@ -178,13 +194,14 @@ const CryptoTransactions = () => {
             // Ensure the modal closes and state is reset regardless of success or failure
             setShowConfirmModal(false);
             setTransactionToDelete(null);
+            setBonus(0)
         }
     };
 
     const resetForm = () => {
         setFormData({
             transaction_type: 'Buy',
-            partner: '',
+            partner: null,
             usdt_amount: '',
             usdt_price: '',
             crypto_safe: '',
@@ -193,7 +210,8 @@ const CryptoTransactions = () => {
             status: 'Pending',
             payment_safe: '',
             currency: 'USD',
-            client_name: ''
+            client_name: '',
+            partner_client: null
         });
         setShowForm(false);
     };
@@ -409,7 +427,7 @@ const CryptoTransactions = () => {
                                     value={formData.bonus}
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                    
+
                                 />
                             </div>
 
@@ -457,6 +475,21 @@ const CryptoTransactions = () => {
                                     value={formData.client_name}
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2">هەڵبژاردنی فرۆشیار/کڕیار</label>
+                                <Select
+                                    name="partner_client"
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    menuPosition="fixed"
+                                    options={partnerOptions2}
+                                    value={partnerOptions2.find(option => option.value === formData.partner_client) || null}
+                                    onChange={handleSelectChange}
+                                    styles={selectStyles}
+                                    placeholder="ناوی دیاری بکە..."
+                                    isClearable
+                                    isSearchable
                                 />
                             </div>
 
@@ -631,15 +664,24 @@ const CryptoTransactions = () => {
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-white/80 text-sm">ناو:</span>
-                                                <span className="font-medium text-white">{transaction.client_name || 'نەزانراو'}</span>
+                                                <span className="font-medium text-white">{transaction.client_name || transaction.partner_client?.name}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-white/80 text-sm">کات:</span>
                                                 <span className="font-medium text-white">{formatDate(transaction.created_at)}</span>
                                             </div>
                                         </div>
+                                        {transaction.partner != null && (
+                                            <div className="bg-white/5 rounded-2xl p-3 mb-4 mt-3">
+                                                <h4 className="text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
+                                                    <UserRound size={16} /> شەریک
+                                                </h4>
+
+                                                    <span className='text-white'>{transaction.partner.partner.name}</span>
+                                            </div>
+                                        )}
                                         {transaction.bonus != 0 && (
-                                            <div className="bg-white/5 rounded-lg p-3 mb-4">
+                                            <div className="bg-white/5 rounded-2xl p-3 mb-4">
                                                 <h4 className="text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
                                                     <Gift size={16} /> عمولە
                                                 </h4>
@@ -651,19 +693,19 @@ const CryptoTransactions = () => {
                                                             </p>
                                                         </div>
                                                     )}
-                                                    
+
                                                 </div>
                                             </div>
                                         )}
 
                                         <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-4">
                                             {transaction.status === 'Pending' && (
-                                            <button
-                                                onClick={() => handleComplete(transaction.id)}
-                                                className="text-green-400 transition-colors p-2 rounded-full hover:bg-white/5"
-                                            >
-                                                <CheckCircle size={22} />
-                                            </button>
+                                                <button
+                                                    onClick={() => handleComplete(transaction.id)}
+                                                    className="text-green-400 transition-colors p-2 rounded-full hover:bg-white/5"
+                                                >
+                                                    <CheckCircle size={22} />
+                                                </button>
                                             )}
                                             <button
                                                 onClick={() => handleDelete(transaction.id)}
@@ -746,9 +788,26 @@ const CryptoTransactions = () => {
                                 ئەم کارە هەڵناوەشێتەوە.
                             </p>
                         </div>
+
+                        {/* Added a form group for the bonus input */}
+                        <div className="mb-4 w-full">
+                            <label htmlFor="bonus" className="block text-sm font-medium mb-1 text-center">
+                                عمولە
+                            </label>
+                            <input
+                                type="number"
+                                id="bonus"
+                                name="bonus"
+                                value={bonus}
+                                onChange={(e) => setBonus(e.target.value)}
+                                className="w-full px-3 py-2 text-white bg-white/10 border border-white/20 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="بڕی عمولە بنووسە"
+                            />
+                        </div>
+
                         <div className="flex gap-3 justify-center mt-4">
                             <button
-                                onClick={confirmComplete}
+                                onClick={() => confirmComplete(bonus)} // Pass the bonus value here
                                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
                             >
                                 <span className="flex items-center justify-center gap-2">

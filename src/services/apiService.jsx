@@ -18,7 +18,6 @@ const apiClient = axios.create({
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache'
     },
-
 });
 
 // Request interceptor for Safari compatibility
@@ -87,6 +86,7 @@ export const api = {
     partners: {
         getAll: (params = {}) => apiClient.get('/partners', { params }),
         getById: (id) => apiClient.get(`/partners/${id}/`),
+        getReport: (id) => apiClient.get(`/partners/${id}/report/`),
         create: (data) => apiClient.post('/partners/', data),
         update: (id, data) => apiClient.put(`/partners/${id}/`, data),
         delete: (id) => apiClient.delete(`/partners/${id}/`),

@@ -11,6 +11,8 @@ const IncomingMoney = () => {
     const [page, setPage] = useState(1);    // current page
     // eslint-disable-next-line no-unused-vars
     const [pageSize, setPageSize] = useState(30); // items per page
+    const [bonus, setBonus] = useState(0);
+    const [bonus2, setBonus2] = useState(0);
     const [partners, setPartners] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -147,9 +149,9 @@ const IncomingMoney = () => {
     };
 
     // Confirm and execute the partner deletion
-    const confirmComplete = async () => {
+    const confirmComplete = async (bonus,bonus2) => {
         try {
-            await api.incomingMoney.update(partnerToDeleteId, { status: 'Completed' });
+            await api.incomingMoney.update(partnerToDeleteId, { status: 'Completed',my_bonus: bonus,partner_bonus:bonus2 });
             await fetchTransactions();
 
         } catch (err) {
@@ -159,6 +161,8 @@ const IncomingMoney = () => {
             // Ensure the modal closes and state is reset regardless of success or failure
             setShowConfirmModal2(false);
             setPartnerToDeleteId(null);
+            setBonus(0);
+            setBonus2(0);
         }
     };
 
@@ -673,12 +677,41 @@ const IncomingMoney = () => {
                             <AlertTriangle size={48} className="text-red-400 mb-3" />
                             <h3 className="text-xl font-bold mb-2 text-center">دڵنیای؟</h3>
                             <p className="text-white/80 text-center">
-                                ئەم هەڵناوەشێتەوە.
+                                ئەم کارە هەڵناوەشێتەوە.
                             </p>
                         </div>
+
+                        {/* Added a form group for the bonus input */}
+                        <div className="mb-4 w-full">
+                            <label htmlFor="bonus" className="block text-sm font-medium mb-1 text-center">
+                                عمولەی دوکان
+                            </label>
+                            <input
+                                type="number"
+                                id="bonus"
+                                name="bonus"
+                                value={bonus}
+                                onChange={(e) => setBonus(e.target.value)}
+                                className="w-full px-3 py-2 text-white bg-white/10 border border-white/20 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="عمولەی دوکان بنوسە"
+                            />
+                            <label htmlFor="bonus" className="block text-sm font-medium mb-1 text-center">
+                                عمولەی نوسینگە
+                            </label>
+                            <input
+                                type="number"
+                                id="bonus2"
+                                name="bonus2"
+                                value={bonus2}
+                                onChange={(e) => setBonus2(e.target.value)}
+                                className="w-full px-3 py-2 text-white bg-white/10 border border-white/20 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="عمولەی نوسینگە بنوسە"
+                            />
+                        </div>
+
                         <div className="flex gap-3 justify-center mt-4">
                             <button
-                                onClick={confirmComplete}
+                                onClick={() => confirmComplete(bonus,bonus2)} // Pass the bonus value here
                                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
                             >
                                 <span className="flex items-center justify-center gap-2">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { User, Clock, DollarSign, ArrowLeftRight, Coins, Banknote } from 'lucide-react';
+import { User, Clock, DollarSign, Wallet, ArrowLeftRight, Coins, Banknote } from 'lucide-react';
 import formatDate from '../components/formatdate';
 const ExchangeTypeChoices = {
     USD_TO_IQD: 'دۆلار بۆ دینار',
@@ -22,6 +22,8 @@ const TransferxExchange = () => {
         usd_amount: '',
         iqd_amount: '',
         exchange_rate: '',
+        bonus_currency: 'USD',
+        my_bonus: 0,
     });
 
     // Fetch initial data when the component mounts
@@ -105,6 +107,7 @@ const TransferxExchange = () => {
                 usd_amount: parseFloat(newExchange.usd_amount),
                 iqd_amount: parseInt(newExchange.iqd_amount),
                 exchange_rate: parseFloat(newExchange.exchange_rate),
+                my_bonus: parseFloat(newExchange.my_bonus),
             });
 
             setExchanges(prevExchanges => [response.data, ...prevExchanges]);
@@ -114,6 +117,8 @@ const TransferxExchange = () => {
                 usd_amount: '',
                 iqd_amount: '',
                 exchange_rate: '',
+                bonus_currency: 'USD',
+                my_bonus: 0,
             });
         } catch (error) {
             console.error("Failed to create transfer exchange:", error);
@@ -203,6 +208,43 @@ const TransferxExchange = () => {
                                 required
                                 className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
                             />
+                        </div>
+                        <div>
+                            <label className="block text-white/80 mb-2">بڕی عمولە</label>
+                            <input
+                                type="number"
+                                name="my_bonus"
+                                value={newExchange.my_bonus}
+                                onChange={handleAmountChange}
+                                step="100000"
+                                required
+                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-white/80 mb-2">دراوی عمولە</label>
+                            <div className="flex border border-white/20">
+                                <button
+                                    type="button"
+                                    onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "USD" } })}
+                                    className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${newExchange.bonus_currency === "USD"
+                                        ? "bg-blue-600 text-white"
+                                        : "text-white/70 hover:bg-white/10"
+                                        }`}
+                                >
+                                    <DollarSign size={18} /> USD
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "IQD" } })}
+                                    className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${newExchange.bonus_currency === "IQD"
+                                        ? "bg-blue-600 text-white"
+                                        : "text-white/70 hover:bg-white/10"
+                                        }`}
+                                >
+                                    <Wallet size={18} /> IQD
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex flex-col items-start justify-center gap-2">
@@ -328,7 +370,7 @@ const TransferxExchange = () => {
                     </button>
                 </div>
             )}
-            
+
         </div>
     );
 };

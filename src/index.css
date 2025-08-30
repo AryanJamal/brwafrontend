@@ -1,7 +1,10 @@
 @import "tailwindcss";
 
+:root {
+  direction: rtl; /* For right-to-left languages like Arabic or Hebrew */
+  /* writing-mode: vertical-rl; */ /* Use this for vertical text flow if needed */
+}
 body {
-    direction: rtl;
     font-family: 'NRT-Bd', Arial, sans-serif;
 }
 

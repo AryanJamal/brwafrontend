@@ -8,11 +8,14 @@ import {
     AlertTriangle,
     Loader2,
     Search,
+    ChevronDown,
+    ChevronUp
 } from "lucide-react";
 import Select from "react-select";
 import { safePartnersApi, safeTypesApi } from "../services/apiService";
 import api from "../services/apiService";
 import selectStyles from "../components/styles";
+
 const defaultFormData = {
     partner_id: "",
     safe_type_id: "",
@@ -46,7 +49,7 @@ const formatPartnerResponse = (rawPartner, safeTypesList) => {
 const SafePartners = () => {
     const [safePartners, setSafePartners] = useState([]);
     const [safeTypes, setSafeTypes] = useState([]);
-    const [partners, setPartners] = useState([]); // New state for partners list
+    const [partners, setPartners] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
@@ -59,6 +62,14 @@ const SafePartners = () => {
     const [formData, setFormData] = useState(defaultFormData);
     const [searchQuery, setSearchQuery] = useState("");
     const [totals, setTotals] = useState({});
+    const [expandedPartners, setExpandedPartners] = useState({});
+
+    const toggleExpand = (id) => {
+        setExpandedPartners(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
 
     const dismissStatus = useCallback(() => {
         setTimeout(() => {
@@ -72,14 +83,14 @@ const SafePartners = () => {
             const [partnersResponse, typesResponse, allPartnersResponse] = await Promise.all([
                 safePartnersApi.getAll(),
                 safeTypesApi.getAll(),
-                api.partners.getAll(), // Fetch all partners
+                api.partners.getAll(),
             ]);
             const formattedPartners = partnersResponse.data.map((p) =>
                 formatPartnerResponse(p, typesResponse.data)
             );
             setSafeTypes(typesResponse.data);
             setSafePartners(formattedPartners);
-            setPartners(allPartnersResponse.data); // Set partners list
+            setPartners(allPartnersResponse.data);
             setLoading(false);
         } catch (err) {
             console.error("Failed to fetch data:", err);
@@ -139,8 +150,6 @@ const SafePartners = () => {
             fetchData();
             setIsSuccess(true);
             resetForm();
-
-
         } catch (err) {
             console.error("Form submission error:", err);
             setStatusMessage(`Error: ${err.message}`);
@@ -181,20 +190,40 @@ const SafePartners = () => {
         setShowForm(false);
     };
 
+    const groupedPartners = useMemo(() => {
+        const groups = safePartners.reduce((acc, partner) => {
+            const partnerId = partner.partner.id || partner.partner_id;
+            if (!acc[partnerId]) {
+                acc[partnerId] = {
+                    ...partner.partner,
+                    safe_types: [],
+                };
+            }
+            acc[partnerId].safe_types.push({
+                safe_type_name: partner.safe_type.name,
+                safe_type_type: partner.safe_type.type,
+                id: partner.id,
+                total_usd: partner.total_usd,
+                total_usdt: partner.total_usdt,
+                total_iqd: partner.total_iqd,
+            });
+            return acc;
+        }, {});
+        return Object.values(groups);
+    }, [safePartners]);
+
     const filteredPartners = useMemo(() => {
         if (!searchQuery) {
-            return safePartners;
+            return groupedPartners;
         }
-        return safePartners.filter(
+        return groupedPartners.filter(
             (partner) =>
-                partner.partner.name
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase()) ||
-                partner.safe_type.name
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
+                partner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                partner.safe_types.some((safe_type) =>
+                    safe_type.safe_type_name.toLowerCase().includes(searchQuery.toLowerCase())
+                )
         );
-    }, [safePartners, searchQuery]);
+    }, [groupedPartners, searchQuery]);
 
     const renderedPartners = useMemo(() => {
         if (filteredPartners.length === 0) {
@@ -210,62 +239,103 @@ const SafePartners = () => {
                 {filteredPartners.map((partner) => (
                     <div
                         key={partner.id}
-                        className="bg-gray-800/80 backdrop-blur-sm border border-white/10 rounded-lg p-4"
+                        className="bg-gray-800/80 backdrop-blur-sm border border-white/10 rounded-lg p-4 cursor-pointer"
+                        onClick={() => toggleExpand(partner.id)}
                     >
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-center">
                             <div>
-                                <h2 className="font-bold text-white">{partner.partner.name}</h2>
+                                <h2 className="font-bold text-white">{partner.name}</h2>
                                 <p className="text-sm text-white/70">
-                                    {partner.partner.phone_number || ""}
+                                    {partner.phone_number || ""}
                                 </p>
                             </div>
-                            <span
-                                className={`text-xs px-2 py-1 rounded-full ${partner.safe_type.type === "Crypto"
-                                    ? "bg-blue-500/20 text-blue-300"
-                                    : "bg-amber-500/20 text-amber-300"
-                                    }`}
-                            >
-                                {partner.safe_type.name}
-                            </span>
-                        </div>
-                        <div className="mt-3 grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-2 text-xl">
-                            <div className={`rounded p-2 ${partner.total_usd < 0 ? "bg-red-950" : "bg-white/5"}`}>
-                                <div className="text-white/60 text-xs">USD</div>
-                                <div className="text-white font-mono overflow-hidden">
-                                    {Number(partner.total_usd)?.toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                    }) || "0.00"}
-                                </div>
-                            </div>
-                            <div className={`rounded p-2 ${partner.total_iqd < 0 ? "bg-red-950" : "bg-white/5"}`}>
-                                <div className="text-white/60 text-xs">IQD</div>
-                                <div className="text-white font-mono overflow-hidden">
-                                    {Number(partner.total_iqd)?.toLocaleString() || "0"}
-                                </div>
-                            </div>
-                            <div className={`rounded p-2 ${partner.total_usdt < 0 ? "bg-red-950" : "bg-white/5"}`}>
-                                <div className="text-white/60 text-xs">USDT</div>
-                                <div className="text-white font-mono overflow-hidden">
-                                    {Number(partner.total_usdt)?.toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                    }) || "0.00"}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="mt-3 flex justify-end gap-2">
                             <button
-                                onClick={() => handleDelete(partner.id)}
-                                className="text-white/70 hover:text-red-400 p-1"
-                                aria-label={`Delete ${partner.partner.name}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleExpand(partner.id);
+                                }}
+                                className="text-white/70 hover:text-white"
+                                aria-label={expandedPartners[partner.id] ? "Collapse" : "Expand"}
                             >
-                                <Trash2 size={18} />
+                                {expandedPartners[partner.id] ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
                             </button>
                         </div>
+                        {expandedPartners[partner.id] && (
+                            <div className="mt-4 space-y-4 transition-all duration-300">
+                                {partner.safe_types.map((safe_type) => (
+                                    <div
+                                        key={safe_type.id}
+                                        className="bg-white/5 rounded-lg p-3 relative"
+                                    >
+                                        <span
+                                            className={`absolute top-0 right-0 text-sm px-2 py-1 ${safe_type.safe_type_type === "Crypto"
+                                                    ? "bg-blue-500/20 text-blue-200"
+                                                    : "bg-amber-500/20 text-amber-200"
+                                                }`}
+                                        >
+                                            {safe_type.safe_type_name}
+                                        </span>
+                                        {safe_type.safe_type_type === "Physical" &&(<div> <div className="mt-7 grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-2 text-xl">
+                                            <div className={`rounded p-2 ${safe_type.total_usd < 0 ? "bg-red-950" : "bg-white/5"}`}>
+                                                <div className="text-white/60 text-xs">USD</div>
+                                                <div className="text-white font-mono overflow-hidden">
+                                                    {Number(safe_type.total_usd)?.toLocaleString('en-US', {
+                                                        minimumFractionDigits: 2,
+                                                    }) || "0.00"}
+                                                </div>
+                                            </div>
+                                            <div className={`rounded p-2 ${safe_type.total_iqd < 0 ? "bg-red-950" : "bg-white/5"}`}>
+                                                <div className="text-white/60 text-xs">IQD</div>
+                                                <div className="text-white font-mono overflow-hidden">
+                                                    {Number(safe_type.total_iqd)?.toLocaleString() || "0"}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 flex justify-end gap-2">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(safe_type.id);
+                                                }}
+                                                className="text-red-400 p-1"
+                                                aria-label={`Delete ${safe_type.safe_type_name} for ${partner.name}`}
+                                            >
+                                                <Trash2 size={22} />
+                                            </button>
+                                        </div></div>)}
+                                        {safe_type.safe_type_type === "Crypto" &&(<div> <div className="mt-7 grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-2 text-xl">
+                                            <div className={`rounded p-2 ${safe_type.total_usdt < 0 ? "bg-red-950" : "bg-white/5"}`}>
+                                                <div className="text-white/60 text-xs">USDT</div>
+                                                <div className="text-white font-mono overflow-hidden">
+                                                    {Number(safe_type.total_usdt)?.toLocaleString('en-US', {
+                                                        minimumFractionDigits: 2,
+                                                    }) || "0.00"}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 flex justify-end gap-2">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(safe_type.id);
+                                                }}
+                                                className="text-red-400 p-1"
+                                                aria-label={`Delete ${safe_type.safe_type_name} for ${partner.name}`}
+                                            >
+                                                <Trash2 size={22} />
+                                            </button>
+                                        </div></div>)}
+                                        
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>
         );
-    }, [filteredPartners, handleDelete]);
+    }, [filteredPartners, handleDelete, expandedPartners]);
+
 
     if (loading)
         return (
@@ -345,7 +415,7 @@ const SafePartners = () => {
                                         </label>
                                         <Select
                                             id="partner_id"
-                                            menuPortalTarget={document.body}   // 👈 attach to body
+                                            menuPortalTarget={document.body}
                                             menuPosition="fixed"
                                             name="partner_id"
                                             options={partners.map((partner) => ({
@@ -377,7 +447,7 @@ const SafePartners = () => {
                                         <Select
                                             id="safe_type_id"
                                             name="safe_type_id"
-                                            menuPortalTarget={document.body}   // 👈 attach to body
+                                            menuPortalTarget={document.body}
                                             menuPosition="fixed"
                                             options={safeTypes.map((type) => ({
                                                 value: type.id,
@@ -446,7 +516,6 @@ const SafePartners = () => {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="submit"
@@ -472,9 +541,7 @@ const SafePartners = () => {
                         </form>
                     </div>
                 )}
-
                 <div className="relative items-right justify-right gap-2 backdrop-blur-sm text-white py-5 rounded-lg transition-all">
-
                     <input
                         type="text"
                         placeholder="گەڕان بەدوای خاوەن یان قاسە..."
@@ -486,12 +553,35 @@ const SafePartners = () => {
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50"
                         size={18}
                     />
+                    
                 </div>
+                <button
+                    onClick={() => {
+                        if (SafeModal) {
+                            setSafeModal(null);
+                        } else {
+                            setSafeModal(true);
+                        }
+                    }}
+                    className="w-full flex items-center justify-center mb-4 gap-2 bg-gray-700/60 hover:bg-gray-700/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                >
+                    {SafeModal ? (
+                        <>
+                            <X size={18} />
+                            شاردنەوە
+                        </>
+                    ) : (
+                        <>
+                            <Plus size={18} />
+                            بیشاندانی کۆی گشتی
+                        </>
+                    )}
+                </button>
                 {statusMessage && (
                     <div
                         className={`p-4 rounded-lg mb-6 flex items-center justify-between ${isSuccess
-                            ? "bg-green-500/20 text-green-200 border border-green-500/30"
-                            : "bg-red-500/20 text-red-200 border border-red-500/30"
+                                ? "bg-green-500/20 text-green-200 border border-green-500/30"
+                                : "bg-red-500/20 text-red-200 border border-red-500/30"
                             }`}
                     >
                         <div className="flex items-center gap-3">
@@ -505,73 +595,48 @@ const SafePartners = () => {
                         >
                             <X size={18} />
                         </button>
+                        
                     </div>
                 )}
-                <button
-                            onClick={() => {
-                                if (SafeModal) {
-                                    setSafeModal(null);
-                                } else {
-                                    setSafeModal(true);
-                                }
-                            }}
-                            className="w-full flex items-center justify-center gap-2 bg-gray-700/60 hover:bg-gray-700/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
-                        >
-                            {SafeModal ? (
-                                <>
-                                    <X size={18} />
-                                    شاردنەوە
-                                </>
-                            ) : (
-                                <>
-                                    <Plus size={18} />
-                                    بیشاندانی کۆی گشتی
-                                </>
-                            )}
-                        </button>
-
+                
                 {SafeModal && (
                     <div className="grid grid-cols-1 md:grid-cols-2 py-4 lg:grid-cols-3 gap-4 transition-all duration-300 transform scale-100 opacity-100">
-                    {Object.entries(totals).map(([safeTypeName, safeTotal]) => (
-                        <div
-                            key={safeTypeName}
-                            className="bg-gray-800/80 backdrop-blur-sm border border-white/10 rounded-lg p-4 text-center"
-                        >
-                            <h3 className="text-xl font-bold text-white mb-2">
-                                کۆی گشتی {safeTypeName}
-                            </h3>
-                            <div className="grid grid-cols-1 gap-2">
-                                <div className="bg-white/5 rounded p-2">
-                                    <div className="text-white/60 text-xs">USD</div>
-                                    <div className="text-white font-mono">
-                                        {safeTotal.usd?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}
+                        {Object.entries(totals).map(([safeTypeName, safeTotal]) => (
+                            <div
+                                key={safeTypeName}
+                                className="bg-gray-800/80 backdrop-blur-sm border border-white/10 rounded-lg p-4 text-center"
+                            >
+                                <h3 className="text-xl font-bold text-white mb-2">
+                                    کۆی گشتی {safeTypeName}
+                                </h3>
+                                <div className="grid grid-cols-1 gap-2">
+                                    <div className="bg-white/5 rounded p-2">
+                                        <div className="text-white/60 text-xs">USD</div>
+                                        <div className="text-white font-mono">
+                                            {safeTotal.usd?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="bg-white/5 rounded p-2">
-                                    <div className="text-white/60 text-xs">IQD</div>
-                                    <div className="text-white font-mono overflow-hidden">
-                                        {safeTotal.iqd?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0"}
+                                    <div className="bg-white/5 rounded p-2">
+                                        <div className="text-white/60 text-xs">IQD</div>
+                                        <div className="text-white font-mono overflow-hidden">
+                                            {safeTotal.iqd?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0"}
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="bg-white/5 rounded p-2">
-                                    <div className="text-white/60 text-xs">USDT</div>
-                                    <div className="text-white font-mono overflow-hidden">
-                                        {safeTotal.usdt?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}
+                                    <div className="bg-white/5 rounded p-2">
+                                        <div className="text-white/60 text-xs">USDT</div>
+                                        <div className="text-white font-mono overflow-hidden">
+                                            {safeTotal.usdt?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-                )};
-
-                
-
+                        ))}
+                    </div>
+                )}
                 <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     {renderedPartners}
                 </div>
             </div>
-
             {showConfirmModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 w-full max-w-sm text-white">
