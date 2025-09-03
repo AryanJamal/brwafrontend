@@ -72,10 +72,6 @@ const CryptoTransactions = () => {
             label: `${name}`
         });
     });
-
-    // Convert the values of the Map back into an array to get the unique options
-    const partnerOptions2 = Array.from(partnerOptionsMap.values());
-
     const fetchInitialData = async () => {
         try {
             const [partnersRes, safesRes] = await Promise.all([
@@ -391,7 +387,6 @@ const CryptoTransactions = () => {
                                 <label className="block text-white/80 mb-2">شوێنی کریپتۆ</label>
                                 <Select
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
                                     name="crypto_safe"
                                     options={cryptoSafeOptions}
                                     value={cryptoSafeOptions.find(option => option.value === formData.crypto_safe) || null}
@@ -407,8 +402,7 @@ const CryptoTransactions = () => {
                                 <label className="block text-white/80 mb-2">شوێنی پارە</label>
                                 <Select
                                     name="payment_safe"
-                                    menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    menuPortalTarget={document.body}
                                     options={paymentSafeOptions}
                                     value={paymentSafeOptions.find(option => option.value === formData.payment_safe) || null}
                                     onChange={handleSelectChange}
@@ -482,9 +476,9 @@ const CryptoTransactions = () => {
                                 <Select
                                     name="partner_client"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
-                                    options={partnerOptions2}
-                                    value={partnerOptions2.find(option => option.value === formData.partner_client) || null}
+
+                                    options={partnerOptions}
+                                    value={partnerOptions.find(option => option.value === formData.partner_client) || null}
                                     onChange={handleSelectChange}
                                     styles={selectStyles}
                                     placeholder="ناوی دیاری بکە..."
@@ -498,7 +492,7 @@ const CryptoTransactions = () => {
                                 <Select
                                     name="partner"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+
                                     options={partnerOptions}
                                     value={partnerOptions.find(option => option.value === formData.partner) || null}
                                     onChange={handleSelectChange}
@@ -554,7 +548,7 @@ const CryptoTransactions = () => {
                             <Select
                                 name="status"
                                 menuPortalTarget={document.body}   // 👈 attach to body
-                                menuPosition="fixed"
+
                                 options={[
                                     { value: '', label: 'هەموو بارودۆخەکان' },
                                     { value: 'Pending', label: 'قەرز' },
@@ -575,7 +569,7 @@ const CryptoTransactions = () => {
                             <Select
                                 name="partner"
                                 menuPortalTarget={document.body}   // 👈 attach to body
-                                menuPosition="fixed"
+
                                 options={[{ value: '', label: 'هەموو شەریکەکان' }, ...partnerOptions]}
                                 value={[{ value: '', label: 'هەموو شەریکەکان' }, ...partnerOptions].find(option => option.value === filters.partner) || null}
                                 onChange={handleFilterSelectChange}
@@ -677,7 +671,7 @@ const CryptoTransactions = () => {
                                                     <UserRound size={16} /> شەریک
                                                 </h4>
 
-                                                    <span className='text-white'>{transaction.partner.partner.name}</span>
+                                                <span className='text-white'>{transaction.partner.partner.name}</span>
                                             </div>
                                         )}
                                         {transaction.bonus != 0 && (

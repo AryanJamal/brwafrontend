@@ -272,7 +272,7 @@ const IncomingMoney = () => {
                                 <Select
                                     name="status"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     value={statusOptions.find(option => option.value === filters.status)}
                                     onChange={(selectedOption) => handleFilterSelectChange('status', selectedOption)}
                                     options={statusOptions}
@@ -305,7 +305,7 @@ const IncomingMoney = () => {
                                 <label className="block text-white/80 mb-2">لە هاوبەش:</label>
                                 <Select
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     name="fromPartner"
                                     value={partnerOptions.find(option => option.value === filters.fromPartner)}
                                     onChange={(selectedOption) => handleFilterSelectChange('fromPartner', selectedOption)}
@@ -319,7 +319,7 @@ const IncomingMoney = () => {
                                 <label className="block text-white/80 mb-2">بۆ هاوبەش:</label>
                                 <Select
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     name="toPartner"
                                     value={partnerOptions.find(option => option.value === filters.toPartner)}
                                     onChange={(selectedOption) => handleFilterSelectChange('toPartner', selectedOption)}
@@ -357,7 +357,7 @@ const IncomingMoney = () => {
                                 <Select
                                     name="from_partner"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     value={partnerOptions.find(option => option.value === formData.from_partner)}
                                     onChange={(selectedOption) => handleSelectChange('from_partner', selectedOption)}
                                     options={partnerOptions}
@@ -370,7 +370,7 @@ const IncomingMoney = () => {
                                 <label className="block text-white/80 mb-2">هاتووە بۆ:</label>
                                 <Select
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     name="to_partner"
                                     value={partnerOptions.find(option => option.value === formData.to_partner)}
                                     onChange={(selectedOption) => handleSelectChange('to_partner', selectedOption)}
@@ -445,7 +445,7 @@ const IncomingMoney = () => {
                                 <Select
                                     name="status"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     value={statusOptions.find(option => option.value === formData.status)}
                                     onChange={(selectedOption) => handleSelectChange('status', selectedOption)}
                                     options={statusOptions}

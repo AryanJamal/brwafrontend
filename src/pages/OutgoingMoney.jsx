@@ -265,7 +265,7 @@ const OutgoingMoney = () => {
                                 <Select
                                     name="status"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     value={statusOptions.find(opt => opt.value === filters.status) || null}
                                     onChange={(selected) =>
                                         setFilters((prev) => ({ ...prev, status: selected ? selected.value : "" }))
@@ -302,7 +302,7 @@ const OutgoingMoney = () => {
                                 <Select
                                     name="fromPartner"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     value={partnerOptions.find(opt => opt.value === filters.fromPartner) || null}
                                     onChange={(selected) =>
                                         setFilters((prev) => ({ ...prev, fromPartner: selected ? selected.value : "" }))
@@ -319,7 +319,7 @@ const OutgoingMoney = () => {
                                 <Select
                                     name="toPartner"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     value={partnerOptions.find(opt => opt.value === filters.toPartner) || null}
                                     onChange={(selected) =>
                                         setFilters((prev) => ({ ...prev, toPartner: selected ? selected.value : "" }))
@@ -359,7 +359,7 @@ const OutgoingMoney = () => {
                                 <Select
                                     name="from_partner"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     value={partnerOptions.find(opt => opt.value === formData.from_partner) || null}
                                     onChange={(selected) =>
                                         setFormData((prev) => ({ ...prev, from_partner: selected ? selected.value : "" }))
@@ -376,7 +376,7 @@ const OutgoingMoney = () => {
                                 <Select
                                     name="to_partner"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     value={partnerOptions.find(opt => opt.value === formData.to_partner) || null}
                                     onChange={(selected) =>
                                         setFormData((prev) => ({ ...prev, to_partner: selected ? selected.value : "" }))
@@ -466,7 +466,7 @@ const OutgoingMoney = () => {
                                 <Select
                                     name="status"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    menuPosition="fixed"
+                                    
                                     value={statusOptions.find(opt => opt.value === formData.status) || null}
                                     onChange={(selected) =>
                                         setFormData((prev) => ({ ...prev, status: selected ? selected.value : "" }))
