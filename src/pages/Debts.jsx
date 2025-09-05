@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { Plus, Edit, Trash2, X, Check, DollarSign, User, Phone, Wallet, Receipt } from 'lucide-react';
+import { Plus, Coins, Trash2, X, Check, DollarSign, Phone, Wallet, Receipt } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 import Select from 'react-select';
@@ -62,6 +62,13 @@ const Debts = () => {
     const handleSelectChange = (selectedOption, actionMeta) => {
         const { name } = actionMeta;
         setDebtFormData(prev => ({
+            ...prev,
+            [name]: selectedOption ? selectedOption.value : ''
+        }));
+    };
+    const handleRSelectChange = (selectedOption, actionMeta) => {
+        const { name } = actionMeta;
+        setRepaymentFormData(prev => ({
             ...prev,
             [name]: selectedOption ? selectedOption.value : ''
         }));
@@ -168,6 +175,10 @@ const Debts = () => {
         });
         setShowDebtForm(false);
     };
+    const safeOptions = safes.map(safe => ({
+        value: safe.id,
+        label: `${safe.name}`
+    }));
 
     const getProgressPercentage = (debt) => {
         return (parseFloat(debt.amount_repaid) / parseFloat(debt.total_amount)) * 100;
@@ -224,18 +235,17 @@ const Debts = () => {
                             {/* Debt Safe */}
                             <div>
                                 <label className="block text-white/80 mb-2">قاسە</label>
-                                <select
+                                <Select
                                     name="debt_safe_id"
-                                    value={debtFormData.debt_safe_id}
-                                    onChange={handleDebtInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    required
-                                >
-                                    <option value="">Select Safe</option>
-                                    {safes.map(safe => (
-                                        <option key={safe.id} value={safe.id}>{safe.name} ({safe.type})</option>
-                                    ))}
-                                </select>
+                                    menuPortalTarget={document.body}
+                                    options={safeOptions}
+                                    value={safeOptions.find(option => option.value === debtFormData.debt_safe_id) || null}
+                                    onChange={handleSelectChange}
+                                    styles={selectStyles}
+                                    placeholder="قاسەی دیاری بکە..."
+                                    isClearable
+                                    isSearchable
+                                />
                             </div>
 
                             <div>
@@ -279,7 +289,7 @@ const Debts = () => {
 
                             {/* Total Amount */}
                             <div>
-                                <label className="block text-white/80 mb-2">بڕێ قەرز</label>
+                                <label className="block text-white/80 mb-2">بڕی قەرز</label>
                                 <input
                                     type="number"
                                     name="total_amount"
@@ -295,16 +305,38 @@ const Debts = () => {
                             {/* Currency */}
                             <div>
                                 <label className="block text-white/80 mb-2">دراو</label>
-                                <select
-                                    name="currency"
-                                    value={debtFormData.currency}
-                                    onChange={handleDebtInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    required
-                                >
-                                    <option value="USD">USD</option>
-                                    <option value="IQD">IQD</option>
-                                </select>
+                                <div className="flex border border-white/20">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDebtInputChange({ target: { name: "currency", value: "USD" } })}
+                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${debtFormData.currency === "USD"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        <DollarSign size={18} /> USD
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDebtInputChange({ target: { name: "currency", value: "USDT" } })}
+                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${debtFormData.currency === "USDT"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        <Coins size={18} /> USDT
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDebtInputChange({ target: { name: "currency", value: "IQD" } })}
+                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${debtFormData.currency === "IQD"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        <Wallet size={18} /> IQD
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Note */}
@@ -381,33 +413,44 @@ const Debts = () => {
                             {/* Safe Type */}
                             <div>
                                 <label className="block text-white/80 mb-2">قاسەی وەرگرتن</label>
-                                <select
+                                <Select
                                     name="safe_type_id"
-                                    value={repaymentFormData.safe_type_id}
-                                    onChange={handleRepaymentInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    required
-                                >
-                                    <option value="">Select Safe</option>
-                                    {safes.map(safe => (
-                                        <option key={safe.id} value={safe.id}>{safe.name} ({safe.type})</option>
-                                    ))}
-                                </select>
+                                    menuPortalTarget={document.body}
+                                    options={safeOptions}
+                                    value={safeOptions.find(option => option.value === repaymentFormData.safe_type_id) || null}
+                                    onChange={handleRSelectChange}
+                                    styles={selectStyles}
+                                    placeholder="قاسە دیاری بکە..."
+                                    isClearable
+                                    isSearchable
+                                />
                             </div>
 
                             {/* Currency */}
                             <div>
                                 <label className="block text-white/80 mb-2">دراو</label>
-                                <select
-                                    name="currency"
-                                    value={repaymentFormData.currency}
-                                    onChange={handleRepaymentInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    required
-                                >
-                                    <option value="USD">USD</option>
-                                    <option value="USDT">USDT</option>
-                                </select>
+                                <div className="flex border border-white/20">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRepaymentInputChange({ target: { name: "currency", value: "USD" } })}
+                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${repaymentFormData.currency === "USD"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        <DollarSign size={18} /> USD
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRepaymentInputChange({ target: { name: "currency", value: "USDT" } })}
+                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${repaymentFormData.currency === "USDT"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        <Coins size={18} /> USDT
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Actions */}

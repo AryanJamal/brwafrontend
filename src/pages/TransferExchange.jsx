@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
 import { User, Clock, DollarSign, Wallet, ArrowLeftRight, Coins, Banknote } from 'lucide-react';
 import formatDate from '../components/formatdate';
+import selectStyles from '../components/styles';
+import Select from 'react-select';
+
 const ExchangeTypeChoices = {
     USD_TO_IQD: 'دۆلار بۆ دینار',
     IQD_TO_USD: 'دینار بۆ دۆلار',
@@ -56,6 +59,13 @@ const TransferxExchange = () => {
             [name]: value,
         }));
     };
+    const handleSelectChange = (selectedOption, actionMeta) => {
+        const { name } = actionMeta;
+        setNewExchange(prev => ({
+            ...prev,
+            [name]: selectedOption ? selectedOption.value : ''
+        }));
+    };
 
     // Handle changes in the amount fields with conditional calculation
     const handleAmountChange = (e) => {
@@ -95,6 +105,10 @@ const TransferxExchange = () => {
             }
         }
     };
+    const partnerOptions = partners.map(partner => ({
+        value: partner.id,
+        label: `${partner.partner.name} - ${partner.safe_type.name}`
+    }));
 
     // Handle form submission to create a new exchange
     const handleFormSubmit = async (e) => {
@@ -140,20 +154,17 @@ const TransferxExchange = () => {
                     <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-white/80 mb-2">شەریـک</label>
-                            <select
-                                name="partner"
-                                value={newExchange.partner}
-                                onChange={handleInputChange}
-                                required
-                                className="w-full bg-slate-800/65 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                            >
-                                <option value="">شەریک دیاری بکە..</option>
-                                {partners.map(partner => (
-                                    <option key={partner.id} value={partner.id} className='text-white'>
-                                        {partner.partner.name} - {partner.safe_type.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <Select
+                                    name="partner"
+                                    menuPortalTarget={document.body} 
+                                    options={partnerOptions}
+                                    value={partnerOptions.find(option => option.value === newExchange.partner) || null}
+                                    onChange={handleSelectChange}
+                                    styles={selectStyles}
+                                    placeholder="ناوی دیاری بکە..."
+                                    isClearable
+                                    isSearchable
+                                />
                         </div>
 
                         <div>
