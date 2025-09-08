@@ -658,7 +658,7 @@ const CryptoTransactions = () => {
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-white/80 text-sm">ناو:</span>
-                                                <span className="font-medium text-white">{transaction.client_name || transaction.partner_client?.name}</span>
+                                                <span className="font-medium text-white">{transaction.client_name || transaction.partner_client?.partner.name}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-white/80 text-sm">کات:</span>

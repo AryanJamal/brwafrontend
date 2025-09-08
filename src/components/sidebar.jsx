@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, HandCoins, ListTodoIcon, ChartCandlestick, FileInput, FileOutput, Repeat, ArrowLeftRight, CircleUser, Vault, CircleSlash2, LogOut } from "lucide-react";
+import { Menu, X, HandCoins, ListTodoIcon,SquareUserRound, ChartCandlestick, FileInput, FileOutput, Repeat, ArrowLeftRight, CircleUser, Vault, CircleSlash2, LogOut } from "lucide-react";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,6 +10,7 @@ const Sidebar = () => {
   // Kurdish navigation items
   const navItems = [
     { name: "حساباتی قاسەکان", path: "/safe-partners", icon: HandCoins },
+    { name: " حسابی کەسی", path: "/partner-report", icon: SquareUserRound },
     { name: "کریپتۆ", path: "/crypto-transactions", icon: ChartCandlestick },
     { name: "حەواڵەی هاتوو", path: "/incoming-money", icon: FileInput },
     { name: "حەواڵە کردن", path: "/outgoing-money", icon: FileOutput },

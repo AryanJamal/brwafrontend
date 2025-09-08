@@ -82,11 +82,7 @@ const Dashboard = () => {
 
     // فانکشنی فۆرماتکردنی دراو
     const formatCurrency = (amount, currency) => {
-        const formatted = new Intl.NumberFormat('en-US', {
-            style: 'decimal',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(parseFloat(amount));
+        const formatted = parseFloat(amount).toLocaleString(undefined,{minimumFractionDigits: 2})
         return `${formatted} ${currency}`;
     };
 

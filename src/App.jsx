@@ -14,23 +14,25 @@ import Partners from './pages/Partners';
 import Debts from './pages/Debts';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import PartnerReport from './pages/PartnerReport';
 
 function App() {
   const [auth, setAuth] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.documentElement.dir = 'rtl';
-    document.documentElement.lang = 'ku';
-
-    // Check token in localStorage
     const token = localStorage.getItem("access");
-    if (token) setAuth(true);
-
-    return () => {
-      document.documentElement.dir = 'ltr';
-    };
+    if (token) {
+      setAuth(true);
+    }
+    setLoading(false);
   }, []);
 
+  if (loading) return (
+        <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+    );
   return (
     <Router>
       {auth ? (
@@ -49,6 +51,7 @@ function App() {
               <Route path="/safe-transactions" element={<SafeTransactions />} />
               <Route path="/partners" element={<Partners />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/partner-report" element={<PartnerReport />} />
               <Route path="/debts" element={<Debts />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
