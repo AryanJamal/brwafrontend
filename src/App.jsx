@@ -36,7 +36,7 @@ function App() {
   return (
     <Router>
       {auth ? (
-        <div className="min-h-screen bg-gradient-to-br from-gray-500 to-gray-400">
+        <div className="min-h-screen bg-gradient-to-br from-gray-700 to-gray-500">
           <Sidebar />
           <main className="md:mr-70 transition-all duration-300 p-4 md:p-8 min-h-screen">
             <Routes>

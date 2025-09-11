@@ -15,7 +15,7 @@ const Sidebar = () => {
     { name: "حەواڵەی هاتوو", path: "/incoming-money", icon: FileInput },
     { name: "حەواڵە کردن", path: "/outgoing-money", icon: FileOutput },
     { name: "ئاڵوگـۆڕ", path: "/exchange", icon: Repeat },
-    { name: "دانانی پارە", path: "/safe-transactions", icon: ArrowLeftRight },
+    { name: "گۆڕانکاری پارە", path: "/safe-transactions", icon: ArrowLeftRight },
     { name: "شەریکەکان", path: "/partners", icon: CircleUser },
     { name: "جۆری قاسە", path: "/safe-types", icon: Vault },
     { name: " قەرز", path: "/debts", icon: CircleSlash2 },

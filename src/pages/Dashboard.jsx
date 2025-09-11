@@ -5,11 +5,7 @@ import { DollarSign, Calendar, TrendingUp, Users, Wallet, CreditCard, FileText, 
 const Dashboard = () => {
     const [dailyBonuses, setDailyBonuses] = useState({ USD: '0.00', IQD: '0.00' });
     const [monthlyBonuses, setMonthlyBonuses] = useState({ USD: '0.00', IQD: '0.00' });
-    const [partners, setPartners] = useState([]);
-    const [selectedPartner, setSelectedPartner] = useState('');
-    const [partnerReport, setPartnerReport] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [reportLoading, setReportLoading] = useState(false);
     const [error, setError] = useState(null);
     // eslint-disable-next-line no-unused-vars
     const [selectedPeriod, setSelectedPeriod] = useState('today');
@@ -18,15 +14,13 @@ const Dashboard = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [dailyResponse, monthlyResponse, partnersResponse] = await Promise.all([
+                const [dailyResponse, monthlyResponse,] = await Promise.all([
                     api.bonuses.getDaily(),
                     api.bonuses.getMonthly(),
-                    api.partners.getAll()
                 ]);
 
                 setDailyBonuses(dailyResponse.data);
                 setMonthlyBonuses(monthlyResponse.data);
-                setPartners(partnersResponse.data);
 
             } catch (err) {
                 setError(err.message);
@@ -37,29 +31,6 @@ const Dashboard = () => {
 
         fetchData();
     }, [selectedPeriod]);
-
-    // Fetch partner report when selected
-    useEffect(() => {
-        const fetchPartnerReport = async () => {
-            if (!selectedPartner) {
-                setPartnerReport(null);
-                return;
-            }
-
-            try {
-                setReportLoading(true);
-                const response = await api.partners.getReport(selectedPartner);
-                setPartnerReport(response.data);
-            } catch (err) {
-                setError(err.message);
-                setPartnerReport(null);
-            } finally {
-                setReportLoading(false);
-            }
-        };
-
-        fetchPartnerReport();
-    }, [selectedPartner]);
 
     // Refresh data function
     const refreshData = async () => {
@@ -86,40 +57,6 @@ const Dashboard = () => {
         return `${formatted} ${currency}`;
     };
 
-    // Calculate totals from partner report
-    const calculateTotals = () => {
-        if (!partnerReport) return null;
-
-        const cryptoTotal = partnerReport.crypto_transactions?.reduce((sum, transaction) =>
-            sum + parseFloat(transaction.usdt_amount), 0) || 0;
-
-        const incomingTotal = partnerReport.incoming_money?.reduce((sum, transaction) =>
-            sum + parseFloat(transaction.money_amount), 0) || 0;
-
-        const outgoingTotal = partnerReport.outgoing_money?.reduce((sum, transaction) =>
-            sum + parseFloat(transaction.money_amount), 0) || 0;
-
-        const cryptoBonus = partnerReport.crypto_transactions?.reduce((sum, transaction) =>
-            sum + parseFloat(transaction.bonus), 0) || 0;
-
-        const incomingMyBonus = partnerReport.incoming_money?.reduce((sum, transaction) =>
-            sum + parseFloat(transaction.my_bonus), 0) || 0;
-
-        const incomingPartnerBonus = partnerReport.incoming_money?.reduce((sum, transaction) =>
-            sum + parseFloat(transaction.partner_bonus), 0) || 0;
-
-        return {
-            cryptoTotal,
-            incomingTotal,
-            outgoingTotal,
-            cryptoBonus,
-            incomingMyBonus,
-            incomingPartnerBonus,
-            grandTotal: cryptoTotal + incomingTotal + outgoingTotal,
-            totalBonus: cryptoBonus + incomingMyBonus + incomingPartnerBonus
-        };
-    };
-
     if (loading) return (
         <div className="ml-0 md:ml-64 p-4 md:p-8 min-h-screen flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
@@ -139,7 +76,6 @@ const Dashboard = () => {
             </div>
         </div>
     );
-    const totals = partnerReport ? calculateTotals() : null;
     return (
         <div className="p-4 min-h-screen bg-slate-50-900 ml-0 sm:mt-6 md:mt-0 xsm:mt-6">
             <div className="mx-auto">
@@ -155,183 +91,6 @@ const Dashboard = () => {
                         نوێکردنەوە
                     </button>
                 </div>
-
-                {/* Partner Report Selector */}
-                <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8">
-                    <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                        <Building className="text-blue-400" size={20} />
-                        ڕاپۆرتی کەسی
-                    </h2>
-                    <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                        <select
-                            value={selectedPartner}
-                            onChange={(e) => setSelectedPartner(e.target.value)}
-                            className="flex-1 bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                        >
-                            <option value="">دیاریکردنی مشتەری</option>
-                            {partners.map(partner => (
-                                <option key={partner.id} value={partner.id}>
-                                    {partner.name}
-                                </option>
-                            ))}
-                        </select>
-
-                        {reportLoading && (
-                            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
-                        )}
-                    </div>
-                </div>
-                {partnerReport && totals && (
-                    <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                            <h2 className="text-xl font-semibold text-white">
-                                ڕاپۆرت بۆ: <span className="text-blue-400">{partnerReport.partner}</span>
-                            </h2>
-                            <div className="flex gap-2 mt-2 md:mt-0">
-                                <span className="px-2 py-1 bg-green-500/20 text-green-300 rounded-full text-sm">
-                                    {partnerReport.crypto_transactions?.length || 0} کیرپتۆ
-                                </span>
-                                <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">
-                                    {partnerReport.incoming_money?.length || 0} حەواڵەی هاتوو
-                                </span>
-                                <span className="px-2 py-1 bg-red-500/20 text-red-300 rounded-full text-sm">
-                                    {partnerReport.outgoing_money?.length || 0} حەواڵە کردن
-                                </span>
-                            </div>
-                        </div>
-                        {/* Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                            <div className="bg-white/5 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <DollarSign className="text-blue-400" size={16} />
-                                    <span className="text-white/80">کۆی گشتی هەمووی:</span>
-                                </div>
-                                <div className="text-xl font-bold text-white">
-                                    {formatCurrency(totals.grandTotal, 'USD')}
-                                </div>
-                            </div>
-
-                            <div className="bg-white/5 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <TrendingUp className="text-green-400" size={16} />
-                                    <span className="text-white/80">کۆی گشتی عمولە:</span>
-                                </div>
-                                <div className="text-xl font-bold text-green-400">
-                                    {formatCurrency(totals.totalBonus, 'USD')}
-                                </div>
-                            </div>
-
-                            <div className="bg-white/5 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <ArrowDown className="text-blue-400" size={16} />
-                                    <span className="text-white/80">کۆی مامەڵەی کرپتۆ</span>
-                                </div>
-                                <div className="text-xl font-bold text-white">
-                                    {formatCurrency(totals.cryptoTotal, 'USD')}
-                                </div>
-                            </div>
-                            <div className="bg-white/5 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <ArrowUp className="text-green-400" size={16} />
-                                    <span className="text-white/80">کۆی گشتی حەواڵەکان</span>
-                                </div>
-                                <div className="text-xl font-bold text-white">
-                                    {formatCurrency(totals.incomingTotal + totals.outgoingTotal, 'USD')}
-                                </div>
-                            </div>
-                        </div>
-                        {/* Detailed Sections */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Crypto Transactions */}
-                            {partnerReport.crypto_transactions?.length > 0 && (
-                                <div className="bg-white/5 rounded-lg p-4">
-                                    <h3 className="text-lg font-semibold text-white mb-3">کریپتۆکان</h3>
-                                    <div className="space-y-2">
-                                        {partnerReport.crypto_transactions.map((transaction) => (
-                                            <div key={transaction.id} className="flex justify-between items-center p-2 bg-white/5 rounded">
-                                                <div>
-                                                    <div className="text-white">{transaction.transaction_type}</div>
-                                                    <div className="text-white/70 text-sm">
-                                                        {formatCurrency(transaction.usdt_amount, 'USD')}
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="text-green-400 text-sm">
-                                                        +{formatCurrency(transaction.bonus, transaction.bonus_currency)}
-                                                    </div>
-                                                    <div className="text-white/70 text-xs">
-                                                        {new Date(transaction.created_at).toLocaleDateString()}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Money Transactions */}
-                            <div className="space-y-4">
-                                {/* Incoming Money */}
-                                {partnerReport.incoming_money?.length > 0 && (
-                                    <div className="bg-white/5 rounded-lg p-4">
-                                        <h3 className="text-lg font-semibold text-white mb-3">حەواڵەی هاتوو</h3>
-                                        <div className="space-y-2">
-                                            {partnerReport.incoming_money.map((transaction) => (
-                                                <div key={transaction.id} className="flex justify-between items-center p-2 bg-white/5 rounded">
-                                                    <div>
-                                                        <div className="text-white">
-                                                            {formatCurrency(transaction.money_amount, transaction.currency)}
-                                                        </div>
-                                                        <div className="text-white/70 text-sm">
-                                                            Status: {transaction.status}
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className="text-green-400 text-sm">
-                                                            دوکان: +{formatCurrency(transaction.my_bonus, transaction.bonus_currency)}
-                                                        </div>
-                                                        <div className="text-blue-400 text-sm">
-                                                            نوسینگە: +{formatCurrency(transaction.partner_bonus, transaction.bonus_currency)}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Outgoing Money */}
-                                {partnerReport.outgoing_money?.length > 0 && (
-                                    <div className="bg-white/5 rounded-lg p-4">
-                                        <h3 className="text-lg font-semibold text-white mb-3">حەواڵە کردن</h3>
-                                        <div className="space-y-2">
-                                            {partnerReport.outgoing_money.map((transaction) => (
-                                                <div key={transaction.id} className="flex justify-between items-center p-2 bg-white/5 rounded">
-                                                    <div>
-                                                        <div className="text-white">
-                                                            {formatCurrency(transaction.money_amount, transaction.currency)}
-                                                        </div>
-                                                        <div className="text-white/70 text-sm">
-                                                            Status: {transaction.status}
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className="text-green-400 text-sm">
-                                                            دوکان: +{formatCurrency(transaction.my_bonus, transaction.bonus_currency)}
-                                                        </div>
-                                                        <div className="text-blue-400 text-sm">
-                                                            نوسینگە: +{formatCurrency(transaction.partner_bonus, transaction.bonus_currency)}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
                     {/* Bonus Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         {/* Daily USD Bonus Card */}

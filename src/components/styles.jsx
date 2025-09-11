@@ -4,7 +4,7 @@ const selectStyles = {
         backgroundColor: 'rgba(30, 41, 59, 0.8)', // slate-800/80
         borderColor: 'rgba(255, 255, 255, 0.2)',
         color: 'white',
-        minHeight: '45px',
+        minHeight: '50px',
         boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : 'none',
         '&:hover': {
             borderColor: 'rgba(255, 255, 255, 0.3)'

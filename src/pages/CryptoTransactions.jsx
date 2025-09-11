@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { api } from '../services/apiService';
-import { Plus, X, Coins, UserRound, CheckCircle, DollarSign, Filter, Gift, AlertTriangle, Wallet, Edit, Trash2, Check, ArrowUp, ArrowDown, Clock, XCircle, Search } from 'lucide-react';
+import { Plus, X, Coins, UserRound, CheckCircle, CreditCard, DollarSign, Filter, Gift, AlertTriangle, Wallet, Trash2, ArrowUp, ArrowDown, Clock, XCircle, Search } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 const CryptoTransactions = () => {
@@ -22,8 +22,8 @@ const CryptoTransactions = () => {
     const [formData, setFormData] = useState({
         transaction_type: 'Buy',
         partner: null,
-        usdt_amount: '',
-        usdt_price: '',
+        usdt_amount: 0,
+        usdt_price: 0,
         crypto_safe: '',
         bonus: 0,
         bonus_currency: 'USD',
@@ -198,8 +198,8 @@ const CryptoTransactions = () => {
         setFormData({
             transaction_type: 'Buy',
             partner: null,
-            usdt_amount: '',
-            usdt_price: '',
+            usdt_amount: 0,
+            usdt_price: 0,
             crypto_safe: '',
             bonus: 0,
             bonus_currency: 'USD',
@@ -278,13 +278,27 @@ const CryptoTransactions = () => {
 
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
+                                <label className="block text-white/80 mb-2">شەریـک</label>
+                                <Select
+                                    name="partner"
+                                    menuPortalTarget={document.body}   // 👈 attach to body
+                                    options={partnerOptions}
+                                    value={partnerOptions.find(option => option.value === formData.partner) || null}
+                                    onChange={handleSelectChange}
+                                    styles={selectStyles}
+                                    placeholder="شەریک دیاری بکە.."
+                                    isClearable
+                                    isSearchable
+                                />
+                            </div>
+                            <div>
                                 <label className="block text-white/80 mb-2">جۆری مامەڵە</label>
-                                <div className="flex border border-white/20">
+                                <div className="flex gap-2">
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "transaction_type", value: "Buy" } })}
-                                        className={`w-full text-center py-2 rounded-md transition-all ${formData.transaction_type === "Buy"
-                                            ? "bg-blue-600 text-white"
+                                        className={`w-full text-center border border-white/20 py-3 rounded-md transition-all ${formData.transaction_type === "Buy"
+                                            ? "bg-green-600 text-white"
                                             : "text-white/70 hover:bg-white/10"
                                             }`}
                                     >
@@ -293,8 +307,8 @@ const CryptoTransactions = () => {
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "transaction_type", value: "Sell" } })}
-                                        className={`w-full text-center py-2 rounded-md transition-all ${formData.transaction_type === "Sell"
-                                            ? "bg-blue-600 text-white"
+                                        className={`w-full text-center border border-white/20 py-3 rounded-md transition-all ${formData.transaction_type === "Sell"
+                                            ? "bg-red-500 text-white"
                                             : "text-white/70 hover:bg-white/10"
                                             }`}
                                     >
@@ -305,12 +319,12 @@ const CryptoTransactions = () => {
 
                             <div>
                                 <label className="block text-white/80 mb-2">بارودۆخ</label>
-                                <div className="flex border border-white/20">
+                                <div className="flex gap-2">
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "status", value: "Pending" } })}
-                                        className={`w-full text-center py-2 rounded-md transition-all ${formData.status === "Pending"
-                                            ? "bg-blue-600 text-white"
+                                        className={`w-full text-center border border-white/20 py-3 rounded-md transition-all ${formData.status === "Pending"
+                                            ? "bg-amber-600 text-white"
                                             : "text-white/70 hover:bg-white/10"
                                             }`}
                                     >
@@ -319,8 +333,8 @@ const CryptoTransactions = () => {
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "status", value: "Completed" } })}
-                                        className={`w-full text-center py-2 rounded-md transition-all ${formData.status === "Completed"
-                                            ? "bg-blue-600 text-white"
+                                        className={`w-full text-center border border-white/20 py-3 rounded-md transition-all ${formData.status === "Completed"
+                                            ? "bg-green-600 text-white"
                                             : "text-white/70 hover:bg-white/10"
                                             }`}
                                     >
@@ -330,13 +344,13 @@ const CryptoTransactions = () => {
                             </div>
 
                             <div>
-                                <label className="block text-white/80 mb-2">بڕی USDT</label>
+                                <label className="block text-white/80 mb-2">بڕی USDT <span className='text-md text-red-500'>*</span></label>
                                 <input
                                     type="number"
                                     name="usdt_amount"
                                     value={formData.usdt_amount}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                    className="w-full bg-white/5  rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                                     required
                                     step="0.01"
                                     min="0"
@@ -344,47 +358,50 @@ const CryptoTransactions = () => {
                             </div>
 
                             <div>
-                                <label className="block text-white/80 mb-2">نرخی USDT</label>
+                                <label className="block text-white/80 mb-2">نرخی USDT <span className='text-md text-red-500'>*</span></label>
                                 <input
                                     type="number"
                                     name="usdt_price"
                                     value={formData.usdt_price}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                    className="w-full bg-white/5  rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                                     required
                                     step="0.01"
                                     min="0"
                                 />
                             </div>
 
+                            {/* Currency */}
                             <div>
-                                <label className="block text-white/80 mb-2">دراوی فرۆشتن/کڕین</label>
-                                <div className="flex border border-white/20">
+                                <label className="block text-slate-300 mb-2">دراوی فرۆشتن/کڕین</label>
+                                <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "currency", value: "USD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${formData.currency === "USD"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "USD"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <DollarSign size={18} /> USD
+                                        <DollarSign size={18} />
+                                        <span className="text-sm mt-1">USD</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "currency", value: "IQD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${formData.currency === "IQD"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "IQD"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <Wallet size={18} /> IQD
+                                        <Wallet size={18} />
+                                        <span className="text-sm mt-1">IQD</span>
                                     </button>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-white/80 mb-2">شوێنی کریپتۆ</label>
+                                <label className="block text-white/80 mb-2">شوێنی کریپتۆ <span className='text-md text-red-500'>*</span></label>
                                 <Select
                                     menuPortalTarget={document.body}   // 👈 attach to body
                                     name="crypto_safe"
@@ -395,11 +412,12 @@ const CryptoTransactions = () => {
                                     placeholder="شوێنی کریپتۆ دیاری بکە.."
                                     isClearable
                                     isSearchable
+                                    required
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-white/80 mb-2">شوێنی پارە</label>
+                                <label className="block text-white/80 mb-2">شوێنی پارە <span className='text-md text-red-500'>*</span></label>
                                 <Select
                                     name="payment_safe"
                                     menuPortalTarget={document.body}
@@ -410,6 +428,7 @@ const CryptoTransactions = () => {
                                     placeholder="شوێنی پارە دیاری بکە.."
                                     isClearable
                                     isSearchable
+                                    required
                                 />
                             </div>
 
@@ -420,46 +439,51 @@ const CryptoTransactions = () => {
                                     name="bonus"
                                     value={formData.bonus}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                    className="w-full bg-white/5  rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
 
                                 />
                             </div>
 
+                            {/* Bonus Currency */}
                             <div>
-                                <label className="block text-white/80 mb-2">دراوی عمولە</label>
-                                <div className="flex border border-white/20">
+                                <label className="block text-slate-300 mb-2">دراوی عمولە</label>
+                                <div className="grid grid-cols-3 gap-2">
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "USDT" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${formData.bonus_currency === "USDT"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.bonus_currency === "USDT"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <Coins size={18} /> USDT
+                                        <Coins size={16} />
+                                        <span className="text-sm mt-1">USDT</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "USD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${formData.bonus_currency === "USD"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.bonus_currency === "USD"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <DollarSign size={18} /> USD
+                                        <DollarSign size={16} />
+                                        <span className="text-sm mt-1">USD</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "IQD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${formData.bonus_currency === "IQD"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.bonus_currency === "IQD"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <Wallet size={18} /> IQD
+                                        <Wallet size={16} />
+                                        <span className="text-sm mt-1">IQD</span>
                                     </button>
                                 </div>
                             </div>
+
 
                             <div>
                                 <label className="block text-white/80 mb-2">ناوی فرۆشیار/کڕیار</label>
@@ -468,7 +492,7 @@ const CryptoTransactions = () => {
                                     name="client_name"
                                     value={formData.client_name}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                                 />
                             </div>
                             <div>
@@ -487,21 +511,6 @@ const CryptoTransactions = () => {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-white/80 mb-2">شەریـک</label>
-                                <Select
-                                    name="partner"
-                                    menuPortalTarget={document.body}   // 👈 attach to body
-
-                                    options={partnerOptions}
-                                    value={partnerOptions.find(option => option.value === formData.partner) || null}
-                                    onChange={handleSelectChange}
-                                    styles={selectStyles}
-                                    placeholder="شەریک دیاری بکە.."
-                                    isClearable
-                                    isSearchable
-                                />
-                            </div>
 
                             <div className="md:col-span-2 flex gap-3 pt-2">
                                 <button
@@ -536,7 +545,7 @@ const CryptoTransactions = () => {
                                     name="searchQuery"
                                     value={filters.searchQuery}
                                     onChange={handleFilterInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 pr-10"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 pr-10"
                                     placeholder="گەڕان..."
                                 />
                                 <Search size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60" />
@@ -548,14 +557,12 @@ const CryptoTransactions = () => {
                             <Select
                                 name="status"
                                 menuPortalTarget={document.body}   // 👈 attach to body
-
                                 options={[
                                     { value: '', label: 'هەموو بارودۆخەکان' },
                                     { value: 'Pending', label: 'قەرز' },
                                     { value: 'Completed', label: 'واصڵ' },
-                                    { value: 'Cancelled', label: 'هەڵوەشاوە' }
                                 ]}
-                                value={[{ value: '', label: 'هەموو بارودۆخەکان' }, { value: 'Pending', label: 'قەرز' }, { value: 'Completed', label: 'واصڵ' }, { value: 'Cancelled', label: 'هەڵوەشاوە' }].find(option => option.value === filters.status) || null}
+                                value={[{ value: '', label: 'هەموو بارودۆخەکان' }, { value: 'Pending', label: 'قەرز' }, { value: 'Completed', label: 'واصڵ' }].find(option => option.value === filters.status) || null}
                                 onChange={handleFilterSelectChange}
                                 styles={selectStyles}
                                 placeholder="بارودۆخ دیاری بکە..."
@@ -587,7 +594,7 @@ const CryptoTransactions = () => {
                                 name="startDate"
                                 value={filters.startDate}
                                 onChange={handleFilterInputChange}
-                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                             />
                         </div>
 
@@ -598,11 +605,11 @@ const CryptoTransactions = () => {
                                 name="endDate"
                                 value={filters.endDate}
                                 onChange={handleFilterInputChange}
-                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end mt-6">
+                    <div className="flex justify-start mt-6">
                         <button
                             onClick={fetchFilteredTransactions}
                             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
@@ -615,8 +622,15 @@ const CryptoTransactions = () => {
 
                 <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     {transactions.length === 0 ? (
-                        <div className="p-6 text-center text-white/60 bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg md:col-span-2 lg:col-span-3">
-                            No transactions found
+                        <div className="p-8 text-center text-slate-400">
+                            <CreditCard size={48} className="mx-auto mb-4" />
+                            <p>هیچ مامەڵەیەک نەدۆزرایەوە</p>
+                            <button
+                                onClick={() => setShowForm(true)}
+                                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
+                            >
+                                زیادکردنی مامەڵەی نوێ
+                            </button>
                         </div>
                     ) : (
                         <>

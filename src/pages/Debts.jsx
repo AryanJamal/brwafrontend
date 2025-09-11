@@ -28,7 +28,8 @@ const Debts = () => {
     const [repaymentFormData, setRepaymentFormData] = useState({
         amount: '',
         safe_type_id: '',
-        currency: 'USD'
+        currency: 'USD',
+        conversion_rate: 1,
     });
 
     const partnerOptions = safePartners.map(partner => ({
@@ -103,12 +104,13 @@ const Debts = () => {
                 debt_id: selectedDebt.id,
                 amount: parseFloat(repaymentFormData.amount),
                 safe_type_id: repaymentFormData.safe_type_id,
-                currency: repaymentFormData.currency
+                currency: repaymentFormData.currency,
+                conversion_rate: repaymentFormData.conversion_rate
             });
 
             const res = await api.debt.getAll();
             setDebts(res.data);
-            setRepaymentFormData({ amount: '', safe_type_id: '', currency: 'USD' });
+            setRepaymentFormData({ amount: '', safe_type_id: '', currency: 'USD', conversion_rate: 1 });
             setShowRepaymentForm(false);
             setSelectedDebt(null);
         } catch (err) {
@@ -118,14 +120,14 @@ const Debts = () => {
 
     const handleAddRepayment = (debt) => {
         setSelectedDebt(debt);
-        setRepaymentFormData({ amount: '', safe_type_id: '', currency: 'USD' }); // Reset repayment form
+        setRepaymentFormData({ amount: '', safe_type_id: '', currency: 'USD', conversion_rate: 1 }); // Reset repayment form
         setShowRepaymentForm(true);
     };
 
     const handleDelete = async (id) => {
         // Find the debt to check for repayments
         const debtToDelete = debts.find(d => d.id === id);
-        
+
         // If the debt has repayments, prevent deletion and show an alert
         if (debtToDelete && debtToDelete.repayments && debtToDelete.repayments.length > 0) {
             alert('This debt has repayments and cannot be deleted. You must delete all repayments first.');
@@ -149,14 +151,14 @@ const Debts = () => {
             try {
                 // Assuming you have a delete method for repayments in your API
                 await api.debtrepayment.delete(repaymentId);
-                
+
                 // Re-fetch all debts to get the updated list
                 const res = await api.debt.getAll();
                 setDebts(res.data);
-                
+
                 // Optional: You could also update the state more efficiently without a full re-fetch
                 // by finding the debt and removing the repayment from its array.
-                
+
             } catch (err) {
                 setError(err.message);
             }
@@ -252,7 +254,7 @@ const Debts = () => {
                                 <label className="block text-white/80 mb-2">قەرزدار</label>
                                 <Select
                                     name="safe_partner_id"
-                                    menuPortalTarget={document.body} 
+                                    menuPortalTarget={document.body}
                                     options={partnerOptions}
                                     value={partnerOptions.find(option => option.value === debtFormData.safe_partner_id) || null}
                                     onChange={handleSelectChange}
@@ -409,6 +411,22 @@ const Debts = () => {
                                     min="0.01"
                                 />
                             </div>
+                            {/* Conversion Rate (only show if different currency) */}
+                            {repaymentFormData.currency !== selectedDebt.currency && (
+                                <div>
+                                    <label className="block text-white/80 mb-2"> نرخ گۆڕین </label>
+                                    <input
+                                        type="number"
+                                        name="conversion_rate"
+                                        value={repaymentFormData.conversion_rate}
+                                        onChange={handleRepaymentInputChange}
+                                        className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                        step="0.01"
+                                        min="0.01"
+                                        required
+                                    />
+                                </div>
+                            )}
 
                             {/* Safe Type */}
                             <div>
@@ -449,6 +467,14 @@ const Debts = () => {
                                             }`}
                                     >
                                         <Coins size={18} /> USDT
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRepaymentInputChange({ target: { name: "currency", value: "IQD" } })}
+                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${repaymentFormData.currency === "IQD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        <Wallet size={18} /> IQD
                                     </button>
                                 </div>
                             </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { api } from '../services/apiService';
-import { User, Calendar, DollarSign, CreditCard, ArrowDown, ArrowUp, FileText, Wallet, TrendingUp, Download } from 'lucide-react';
+import { User, CreditCard, ArrowDown, ArrowUp, FileText, Wallet, TrendingUp, Download } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 
@@ -162,7 +162,7 @@ const PartnerReport = () => {
                                     <div>
                                         <div className="text-white font-medium">{transaction.transaction_type}</div>
                                         <div className="text-white/70 text-sm">
-                                            {transaction.client_name || 'No client name'}
+                                            {transaction.client_name || transaction.partner_client  || 'No client name'}
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -184,6 +184,44 @@ const PartnerReport = () => {
                     )}
                 </div>
 
+                {/* Incoming Money */}
+                <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <ArrowDown className="text-green-400" size={20} />
+                        حەواڵەی هاتوو ({reportData.incoming_money?.length || 0})
+                    </h3>
+                    {reportData.incoming_money?.length > 0 ? (
+                        <div className="space-y-2">
+                            {reportData.incoming_money.map((transaction) => (
+                                <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                    <div>
+                                        <div className="text-white font-medium">
+                                            {parseFloat(transaction.money_amount).toFixed(2)} {transaction.currency}
+                                        </div>
+                                        <div className="text-white/70 text-sm">
+                                            بارودۆخ: <span className={transaction.status === 'Completed' ? 'text-green-400' : 'text-amber-400'}>
+                                                {transaction.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-green-400 text-sm">
+                                            عمولەی من: +{parseFloat(transaction.my_bonus).toFixed(2)} {transaction.bonus_currency}
+                                        </div>
+                                        <div className="text-blue-400 text-sm">
+                                            عمولەی شەریک: +{parseFloat(transaction.partner_bonus).toFixed(2)} {transaction.bonus_currency}
+                                        </div>
+                                        <div className="text-white/70 text-xs">
+                                            {formatDate(transaction.created_at)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-white/60">هیچ حەواڵەیەکی هاتووی نییە.</p>
+                    )}
+                </div>
                 {/* Incoming Money */}
                 <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">

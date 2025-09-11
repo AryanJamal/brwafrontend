@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { Plus, ArrowUp, Wallet, Coins, ArrowDown, Clock, XCircle, User, DollarSign, FileText, Edit, Trash2 } from 'lucide-react';
+import { Plus, ArrowUp, Wallet, Coins, ArrowDown, Clock, XCircle, User, DollarSign, FileText, ArrowLeftRight, Trash2 } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles'; 
 import Select from 'react-select';
@@ -11,14 +11,20 @@ const SafeTransactions = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [formType, setFormType] = useState(null); // New state for form type
+    const [isLoading, setIsLoading] = useState(false); // Changed to false to prevent initial loader from showing
 
     const [formData, setFormData] = useState({
-        partner: '',
-        transaction_type: 'ADD',
+        // For both forms
         money_amount: '',
         currency: 'USD',
-        note: ''
+        note: '',
+        // For 'transaction' form
+        partner: '',
+        transaction_type: 'ADD',
+        // For 'transfer' form
+        from_safepartner: '',
+        to_safepartner: ''
     });
 
     useEffect(() => {
@@ -35,8 +41,6 @@ const SafeTransactions = () => {
             } catch (err) {
                 setError(err.message);
                 setLoading(false);
-            } finally {
-                setIsLoading(false);
             }
         };
 
@@ -44,7 +48,7 @@ const SafeTransactions = () => {
     }, []);
 
     const handleSelectChange = (name, selectedOption) => {
-        setFormData(prev => ({ ...prev, [name]: selectedOption.value }));
+        setFormData(prev => ({ ...prev, [name]: selectedOption ? selectedOption.value : '' }));
     };
 
     const handleInputChange = (e) => {
@@ -53,16 +57,39 @@ const SafeTransactions = () => {
     };
 
     const handleSubmit = async (e) => {
+        e.preventDefault();
         if (isLoading) return;
         setIsLoading(true);
-        e.preventDefault();
+
         try {
-            await api.safeTransactions.create(formData);
-            const res = await api.safeTransactions.getAll()
-            setTransactions(res.data)
+            let dataToSend = {};
+            if (formType === 'transaction') {
+                dataToSend = {
+                    partner: formData.partner,
+                    transaction_type: formData.transaction_type,
+                    money_amount: formData.money_amount,
+                    currency: formData.currency,
+                    note: formData.note
+                };
+            } else if (formType === 'transfer') {
+                dataToSend = {
+                    from_safepartner: formData.from_safepartner,
+                    transaction_type: 'TRANSFER',
+                    to_safepartner: formData.to_safepartner,
+                    money_amount: formData.money_amount,
+                    currency: formData.currency,
+                    note: formData.note
+                };
+            }
+
+            await api.safeTransactions.create(dataToSend);
+            const res = await api.safeTransactions.getAll();
+            setTransactions(res.data);
             resetForm();
         } catch (err) {
             setError(err.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -83,15 +110,19 @@ const SafeTransactions = () => {
             transaction_type: 'ADD',
             money_amount: '',
             currency: 'USD',
-            note: ''
+            note: '',
+            from_safepartner: '',
+            to_safepartner: ''
         });
         setShowForm(false);
+        setFormType(null); // Reset the form type
     };
 
     const getStatusIcon = (type) => {
         switch (type) {
             case 'ADD': return <ArrowDown className="text-green-400" size={18} />;
             case 'REMOVE': return <ArrowUp className="text-red-400" size={18} />;
+            case 'TRANSFER': return <ArrowLeftRight className="text-yellow-400" size={18} />;
             default: return <Clock className="text-amber-400" size={18} />;
         }
     };
@@ -100,6 +131,7 @@ const SafeTransactions = () => {
         switch (type) {
             case 'ADD': return 'زیادکردن';
             case 'REMOVE': return 'هەڵگرتن';
+            case 'TRANSFER': return 'گواستنەوە';
             default: return type;
         }
     };
@@ -139,9 +171,15 @@ const SafeTransactions = () => {
         <div className="p-4 min-h-screen bg-slate-50-900 ml-0 sm:mt-6 md:mt-0 xsm:mt-6">
             <div className="mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-white">دانان و هەڵگرتنی پارە</h1>
+                    <h1 className="text-2xl font-bold text-white">گۆڕانکاری پارە</h1>
                     <button
-                        onClick={() => setShowForm(!showForm)}
+                        onClick={() => {
+                            if (showForm) {
+                                resetForm();
+                            } else {
+                                setShowForm(true);
+                            }
+                        }}
                         className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
                     >
                         <Plus size={18} />
@@ -150,129 +188,257 @@ const SafeTransactions = () => {
                 </div>
 
                 {showForm && (
-                    <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-white">
-                                {"زیادکردن"}
-                            </h2>
-                            <button onClick={resetForm} className="text-white/70 hover:text-white">
-                                <XCircle size={20} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            {/* Partner */}
-                            <div>
-                                <label className="block text-white/80 mb-2">شەریک و قاسە</label>
-                                <Select
-                                    name="partner"
-                                    options={partnerOptions}
-                                    onChange={selectedOption => handleSelectChange('partner', selectedOption)}
-                                    value={partnerOptions.find(option => option.value === formData.partner)}
-                                    styles={selectStyles}
-                                    placeholder="شەریک دیاری بکە.."
-                                    isClearable
-                                />
-                            </div>
-
-                            {/* Transaction Type */}
-                            <div>
-                                <label className="block text-white/80 mb-2">جۆر:</label>
-                                <Select
-                                    name="transaction_type"
-                                    options={transactionTypeOptions}
-                                    onChange={selectedOption => handleSelectChange('transaction_type', selectedOption)}
-                                    value={transactionTypeOptions.find(option => option.value === formData.transaction_type)}
-                                    styles={selectStyles}
-                                />
-                            </div>
-
-                            {/* Money Amount */}
-                            <div>
-                                <label className="block text-white/80 mb-2">بڕی پارە</label>
-                                <input
-                                    type="number"
-                                    name="money_amount"
-                                    value={formData.money_amount}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    required
-                                    step="0.01"
-                                    min="0"
-                                />
-                            </div>
-
-                            {/* Currency */}
-                            <div>
-                                <label className="block text-white/80 mb-2">جۆری دراو</label>
-                                <div className="flex border border-white/20">
+                    <>
+                        {!formType && (
+                            <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
+                                <h2 className="text-xl font-semibold text-white mb-4">جۆری مامەڵە دیاری بکە</h2>
+                                <div className="flex flex-col sm:flex-row gap-4">
                                     <button
-                                        type="button"
-                                        onClick={() => handleInputChange({ target: { name: "currency", value: "USDT" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${
-                                            formData.currency === "USDT"
-                                                ? "bg-blue-600 text-white"
-                                                : "text-white/70 hover:bg-white/10"
-                                        }`}
+                                        onClick={() => setFormType('transaction')}
+                                        className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
                                     >
-                                        <Coins size={18} /> USDT
+                                        <Wallet size={18} />
+                                        زیادکردن/هەڵگرتن
                                     </button>
                                     <button
-                                        type="button"
-                                        onClick={() => handleInputChange({ target: { name: "currency", value: "USD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${
-                                            formData.currency === "USD"
-                                                ? "bg-blue-600 text-white"
-                                                : "text-white/70 hover:bg-white/10"
-                                        }`}
+                                        onClick={() => setFormType('transfer')}
+                                        className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
                                     >
-                                        <DollarSign size={18} /> USD
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleInputChange({ target: { name: "currency", value: "IQD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${
-                                            formData.currency === "IQD"
-                                                ? "bg-blue-600 text-white"
-                                                : "text-white/70 hover:bg-white/10"
-                                        }`}
-                                    >
-                                        <Wallet size={18} /> IQD
+                                        <ArrowLeftRight size={18} />
+                                        گواستنەوە
                                     </button>
                                 </div>
                             </div>
+                        )}
 
-                            {/* Note */}
-                            <div>
-                                <label className="block text-white/80 mb-2">تێـبینی</label>
-                                <textarea
-                                    name="note"
-                                    value={formData.note}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    rows="3"
-                                />
+                        {formType === 'transaction' && (
+                            <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-semibold text-white">زیادکردن و هەڵگرتن</h2>
+                                    <button onClick={resetForm} className="text-white/70 hover:text-white">
+                                        <XCircle size={20} />
+                                    </button>
+                                </div>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    {/* Partner */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">شەریک و قاسە</label>
+                                        <Select
+                                            name="partner"
+                                            options={partnerOptions}
+                                            onChange={selectedOption => handleSelectChange('partner', selectedOption)}
+                                            value={partnerOptions.find(option => option.value === formData.partner)}
+                                            styles={selectStyles}
+                                            placeholder="شەریک دیاری بکە.."
+                                            isClearable
+                                        />
+                                    </div>
+                                    {/* Transaction Type */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">جۆر:</label>
+                                        <Select
+                                            name="transaction_type"
+                                            options={transactionTypeOptions}
+                                            onChange={selectedOption => handleSelectChange('transaction_type', selectedOption)}
+                                            value={transactionTypeOptions.find(option => option.value === formData.transaction_type)}
+                                            styles={selectStyles}
+                                        />
+                                    </div>
+                                    {/* Money Amount */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">بڕی پارە</label>
+                                        <input
+                                            type="number"
+                                            name="money_amount"
+                                            value={formData.money_amount}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                            required
+                                            step="0.01"
+                                            min="0"
+                                        />
+                                    </div>
+                                    {/* Currency */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">جۆری دراو</label>
+                                        <div className="flex border border-white/20 rounded-lg overflow-hidden">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: "currency", value: "USDT" } })}
+                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
+                                                    formData.currency === "USDT" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
+                                                }`}
+                                            >
+                                                <Coins size={18} /> USDT
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: "currency", value: "USD" } })}
+                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
+                                                    formData.currency === "USD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
+                                                }`}
+                                            >
+                                                <DollarSign size={18} /> USD
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: "currency", value: "IQD" } })}
+                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
+                                                    formData.currency === "IQD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
+                                                }`}
+                                            >
+                                                <Wallet size={18} /> IQD
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {/* Note */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">تێـبینی</label>
+                                        <textarea
+                                            name="note"
+                                            value={formData.note}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                            rows="3"
+                                        />
+                                    </div>
+                                    {/* Form Actions */}
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={isLoading}
+                                            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
+                                        >
+                                            {isLoading ? 'ناردن...' : 'زیادکردن'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={resetForm}
+                                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                                        >
+                                            لابردن
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
+                        )}
 
-                            {/* Form Actions */}
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
-                                >
-                                    {isLoading ? 'ناردن...' : 'زیادکردن'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={resetForm}
-                                    className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
-                                >
-                                    لابردن
-                                </button>
+                        {formType === 'transfer' && (
+                            <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-semibold text-white">گواستنەوە</h2>
+                                    <button onClick={resetForm} className="text-white/70 hover:text-white">
+                                        <XCircle size={20} />
+                                    </button>
+                                </div>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    {/* From Safe Partner */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">لە قاسەی</label>
+                                        <Select
+                                            name="from_safepartner"
+                                            options={partnerOptions}
+                                            onChange={selectedOption => handleSelectChange('from_safepartner', selectedOption)}
+                                            value={partnerOptions.find(option => option.value === formData.from_safepartner)}
+                                            styles={selectStyles}
+                                            placeholder="قاسەی سەرەتا دیاری بکە.."
+                                            isClearable
+                                            required
+                                        />
+                                    </div>
+                                    {/* To Safe Partner */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">بۆ قاسەی</label>
+                                        <Select
+                                            name="to_safepartner"
+                                            options={partnerOptions}
+                                            onChange={selectedOption => handleSelectChange('to_safepartner', selectedOption)}
+                                            value={partnerOptions.find(option => option.value === formData.to_safepartner)}
+                                            styles={selectStyles}
+                                            placeholder="قاسەی کۆتایی دیاری بکە.."
+                                            isClearable
+                                            required
+                                        />
+                                    </div>
+                                    {/* Money Amount */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">بڕی پارە</label>
+                                        <input
+                                            type="number"
+                                            name="money_amount"
+                                            value={formData.money_amount}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                            required
+                                            step="0.01"
+                                            min="0"
+                                        />
+                                    </div>
+                                    {/* Currency */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">جۆری دراو</label>
+                                        <div className="flex border border-white/20 rounded-lg overflow-hidden">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: "currency", value: "USDT" } })}
+                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
+                                                    formData.currency === "USDT" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
+                                                }`}
+                                            >
+                                                <Coins size={18} /> USDT
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: "currency", value: "USD" } })}
+                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
+                                                    formData.currency === "USD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
+                                                }`}
+                                            >
+                                                <DollarSign size={18} /> USD
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: "currency", value: "IQD" } })}
+                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
+                                                    formData.currency === "IQD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
+                                                }`}
+                                            >
+                                                <Wallet size={18} /> IQD
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {/* Note */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">تێـبینی</label>
+                                        <textarea
+                                            name="note"
+                                            value={formData.note}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                            rows="3"
+                                        />
+                                    </div>
+                                    {/* Form Actions */}
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={isLoading}
+                                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
+                                        >
+                                            {isLoading ? 'ناردن...' : 'گواستنەوە'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={resetForm}
+                                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                                        >
+                                            لابردن
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                        </form>
-                    </div>
+                        )}
+                    </>
                 )}
 
                 {/* Transactions List as Cards */}
@@ -296,13 +462,33 @@ const SafeTransactions = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <User size={20} className="text-purple-400" />
-                                        <div className="text-sm">
-                                            <p className="font-medium text-white/80">شەریک</p>
-                                            <p className="text-white">{transaction.partner?.partner.name || 'Unknown'}</p>
+                                    {transaction.from_safepartner && (
+                                        <div className="flex items-center gap-2">
+                                            <ArrowUp size={20} className="text-red-400" />
+                                            <div className="text-sm">
+                                                <p className="font-medium text-white/80">لە قاسەی</p>
+                                                <p className="text-white">{transaction.from_safepartner?.partner?.name || 'Unknown'}</p>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
+                                    {transaction.to_safepartner && (
+                                        <div className="flex items-center gap-2">
+                                            <ArrowDown size={20} className="text-green-400" />
+                                            <div className="text-sm">
+                                                <p className="font-medium text-white/80">بۆ قاسەی</p>
+                                                <p className="text-white">{transaction.to_safepartner?.partner?.name || 'Unknown'}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {transaction.partner && (
+                                        <div className="flex items-center gap-2">
+                                            <User size={20} className="text-purple-400" />
+                                            <div className="text-sm">
+                                                <p className="font-medium text-white/80">شەریک</p>
+                                                <p className="text-white">{transaction.partner?.partner.name || 'Unknown'}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-2">
                                         <DollarSign size={20} className="text-green-400" />
                                         <div className="text-sm">
