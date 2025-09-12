@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { DollarSign, Calendar, TrendingUp, Users, Wallet, CreditCard, FileText, Building, ArrowUp, ArrowDown } from 'lucide-react';
+import { DollarSign, Calendar, TrendingUp, Users, Wallet, CreditCard, FileText, Building, ArrowUp, ArrowDown, RefreshCcw } from 'lucide-react';
 
 const Dashboard = () => {
     const [dailyBonuses, setDailyBonuses] = useState({ USD: '0.00', IQD: '0.00' });
@@ -79,19 +79,19 @@ const Dashboard = () => {
     return (
         <div className="p-4 min-h-screen bg-slate-50-900 ml-0 sm:mt-6 md:mt-0 xsm:mt-6">
             <div className="mx-auto">
-                <div className="flex justify-between items-center mb-4"></div>
+                <div className="flex justify-between items-center mb-6">
 
-                <h1 className="text-2xl font-bold text-white mb-2">داهـات</h1>
-
-                <div className="flex py-2">
+                <h1 className="text-2xl font-bold text-white">داهـات</h1>
                     <button
                         onClick={refreshData}
-                        className="bg-slate-800/80 hover:bg-slate-800 border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
                     >
+                        <RefreshCcw size={18} />
                         نوێکردنەوە
                     </button>
                 </div>
                     {/* Bonus Cards Grid */}
+                    <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         {/* Daily USD Bonus Card */}
                         <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 hover:bg-slate-800/90 transition-colors">
@@ -252,6 +252,7 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
             );
 };

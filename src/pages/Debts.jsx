@@ -503,6 +503,7 @@ const Debts = () => {
                 )}
 
                 {/* Debts List */}
+                <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {debts.length === 0 ? (
                         <div className="col-span-full bg-slate-800/80 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center text-white/60">
@@ -633,6 +634,7 @@ const Debts = () => {
                     )}
                 </div>
             </div>
+        </div>
         </div>
     );
 };

@@ -48,6 +48,7 @@ const formatPartnerResponse = (rawPartner, safeTypesList) => {
 
 const SafePartners = () => {
     const [safePartners, setSafePartners] = useState([]);
+    const [pendingTotals, setPendingTotals] = useState({});
     const [safeTypes, setSafeTypes] = useState([]);
     const [partners, setPartners] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -80,10 +81,11 @@ const SafePartners = () => {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [partnersResponse, typesResponse, allPartnersResponse] = await Promise.all([
+            const [partnersResponse, typesResponse, allPartnersResponse, pendingResponse] = await Promise.all([
                 safePartnersApi.getAll(),
                 safeTypesApi.getAll(),
                 api.partners.getAll(),
+                api.pendingamount.getAll(),
             ]);
             const formattedPartners = partnersResponse.data.map((p) =>
                 formatPartnerResponse(p, typesResponse.data)
@@ -91,6 +93,7 @@ const SafePartners = () => {
             setSafeTypes(typesResponse.data);
             setSafePartners(formattedPartners);
             setPartners(allPartnersResponse.data);
+            setPendingTotals(pendingResponse.data);
             setLoading(false);
         } catch (err) {
             console.error("Failed to fetch data:", err);
@@ -113,11 +116,51 @@ const SafePartners = () => {
                 }
                 return acc;
             }, {});
+            const outgoingPending = pendingTotals.outgoing || {};
+            for (const currency in outgoingPending) {
+                if (Object.prototype.hasOwnProperty.call(outgoingPending, currency)) {
+                    for (const partnerType in outgoingPending[currency]) {
+                        if (Object.prototype.hasOwnProperty.call(outgoingPending[currency], partnerType)) {
+                            const totalToSubtract = Number(outgoingPending[currency][partnerType]);
+                            // Find the corresponding safeTypeName and subtract the amount
+                            const safeTypeForPartnerType = safeTypes.find(type => type.name === partnerType);
+                            if (safeTypeForPartnerType) {
+                                const safeTypeName = safeTypeForPartnerType.name;
+                                const key = currency.toLowerCase();
+                                if (calculatedTotals[safeTypeName] && calculatedTotals[safeTypeName][key] !== undefined) {
+                                    calculatedTotals[safeTypeName][key] -= totalToSubtract;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Process Incoming Pending Amounts
+            const incomingPending = pendingTotals.incoming || {};
+            for (const currency in incomingPending) {
+                if (Object.prototype.hasOwnProperty.call(incomingPending, currency)) {
+                    for (const partnerType in incomingPending[currency]) {
+                        if (Object.prototype.hasOwnProperty.call(incomingPending[currency], partnerType)) {
+                            const totalToAdd = Number(incomingPending[currency][partnerType]);
+                            // Find the corresponding safeTypeName and add the amount
+                            const safeTypeForPartnerType = safeTypes.find(type => type.name === partnerType);
+                            if (safeTypeForPartnerType) {
+                                const safeTypeName = safeTypeForPartnerType.name;
+                                const key = currency.toLowerCase();
+                                if (calculatedTotals[safeTypeName] && calculatedTotals[safeTypeName][key] !== undefined) {
+                                    calculatedTotals[safeTypeName][key] += totalToAdd;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             setTotals(calculatedTotals);
         } else {
             setTotals({});
         }
-    }, [safePartners, safeTypes]);
+    }, [safePartners, safeTypes, pendingTotals]);
 
     useEffect(() => {
         fetchData();
@@ -269,13 +312,13 @@ const SafePartners = () => {
                                     >
                                         <span
                                             className={`absolute top-0 right-0 text-sm px-2 py-1 ${safe_type.safe_type_type === "Crypto"
-                                                    ? "bg-blue-500/20 text-blue-200"
-                                                    : "bg-amber-500/20 text-amber-200"
+                                                ? "bg-blue-500/20 text-blue-200"
+                                                : "bg-amber-500/20 text-amber-200"
                                                 }`}
                                         >
                                             {safe_type.safe_type_name}
                                         </span>
-                                        {safe_type.safe_type_type === "Physical" &&(<div> <div className="mt-7 grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-2 text-xl">
+                                        {safe_type.safe_type_type === "Physical" && (<div> <div className="mt-7 grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-2 text-xl">
                                             <div className={`rounded p-2 ${safe_type.total_usd < 0 ? "bg-red-950" : "bg-white/5"}`}>
                                                 <div className="text-white/60 text-xs">USD</div>
                                                 <div className="text-white font-mono overflow-hidden">
@@ -291,19 +334,19 @@ const SafePartners = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mt-3 flex justify-end gap-2">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(safe_type.id);
-                                                }}
-                                                className="text-red-400 p-1"
-                                                aria-label={`Delete ${safe_type.safe_type_name} for ${partner.name}`}
-                                            >
-                                                <Trash2 size={22} />
-                                            </button>
-                                        </div></div>)}
-                                        {safe_type.safe_type_type === "Crypto" &&(<div> <div className="mt-7 grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-2 text-xl">
+                                            <div className="mt-3 flex justify-end gap-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(safe_type.id);
+                                                    }}
+                                                    className="text-red-400 p-1"
+                                                    aria-label={`Delete ${safe_type.safe_type_name} for ${partner.name}`}
+                                                >
+                                                    <Trash2 size={22} />
+                                                </button>
+                                            </div></div>)}
+                                        {safe_type.safe_type_type === "Crypto" && (<div> <div className="mt-7 grid lg:grid-cols-3 md:grid-cols-1 sm:grid-cols-1 gap-2 text-xl">
                                             <div className={`rounded p-2 ${safe_type.total_usdt < 0 ? "bg-red-950" : "bg-white/5"}`}>
                                                 <div className="text-white/60 text-xs">USDT</div>
                                                 <div className="text-white font-mono overflow-hidden">
@@ -313,19 +356,19 @@ const SafePartners = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mt-3 flex justify-end gap-2">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(safe_type.id);
-                                                }}
-                                                className="text-red-400 p-1"
-                                                aria-label={`Delete ${safe_type.safe_type_name} for ${partner.name}`}
-                                            >
-                                                <Trash2 size={22} />
-                                            </button>
-                                        </div></div>)}
-                                        
+                                            <div className="mt-3 flex justify-end gap-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(safe_type.id);
+                                                    }}
+                                                    className="text-red-400 p-1"
+                                                    aria-label={`Delete ${safe_type.safe_type_name} for ${partner.name}`}
+                                                >
+                                                    <Trash2 size={22} />
+                                                </button>
+                                            </div></div>)}
+
                                     </div>
                                 ))}
                             </div>
@@ -416,7 +459,7 @@ const SafePartners = () => {
                                         <Select
                                             id="partner_id"
                                             menuPortalTarget={document.body}
-                                            
+
                                             name="partner_id"
                                             options={partners.map((partner) => ({
                                                 value: partner.id,
@@ -448,7 +491,7 @@ const SafePartners = () => {
                                             id="safe_type_id"
                                             name="safe_type_id"
                                             menuPortalTarget={document.body}
-                                            
+
                                             options={safeTypes.map((type) => ({
                                                 value: type.id,
                                                 label: `${type.name} (${type.type})`,
@@ -553,7 +596,7 @@ const SafePartners = () => {
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50"
                         size={18}
                     />
-                    
+
                 </div>
                 <button
                     onClick={() => {
@@ -580,8 +623,8 @@ const SafePartners = () => {
                 {statusMessage && (
                     <div
                         className={`p-4 rounded-lg mb-6 flex items-center justify-between ${isSuccess
-                                ? "bg-green-500/20 text-green-200 border border-green-500/30"
-                                : "bg-red-500/20 text-red-200 border border-red-500/30"
+                            ? "bg-green-500/20 text-green-200 border border-green-500/30"
+                            : "bg-red-500/20 text-red-200 border border-red-500/30"
                             }`}
                     >
                         <div className="flex items-center gap-3">
@@ -595,10 +638,10 @@ const SafePartners = () => {
                         >
                             <X size={18} />
                         </button>
-                        
+
                     </div>
                 )}
-                
+
                 {SafeModal && (
                     <div className="grid grid-cols-1 md:grid-cols-2 py-4 lg:grid-cols-3 gap-4 transition-all duration-300 transform scale-100 opacity-100">
                         {Object.entries(totals).map(([safeTypeName, safeTotal]) => (

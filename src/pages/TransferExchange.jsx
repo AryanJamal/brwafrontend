@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/apiService';
-import { User, Clock, DollarSign, Wallet, ArrowLeftRight, Coins, Banknote } from 'lucide-react';
+import { User, Clock, Trash2, DollarSign, AlertTriangle, CheckCircle, X, Wallet, ArrowLeftRight, Coins, Banknote, CreditCard, ArrowDown, ArrowUp } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 import Select from 'react-select';
@@ -14,10 +14,13 @@ const TransferxExchange = () => {
     const [exchanges, setExchanges] = useState([]);
     const [partners, setPartners] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [count, setCount] = useState(0);   // total items
-    const [page, setPage] = useState(1);     // current page
+    const [showForm, setShowForm] = useState(false);
+    const [count, setCount] = useState(0);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [exchangeToDeleteId, setExchangeToDeleteId] = useState(null);
+    const [page, setPage] = useState(1);
     // eslint-disable-next-line no-unused-vars
-    const [pageSize, setPageSize] = useState(30); // items per page
+    const [pageSize, setPageSize] = useState(30);
     const [isAutoCalculateEnabled, setIsAutoCalculateEnabled] = useState(true);
     const [newExchange, setNewExchange] = useState({
         partner: '',
@@ -29,25 +32,29 @@ const TransferxExchange = () => {
         my_bonus: 0,
     });
 
-    // Fetch initial data when the component mounts
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [exchangesData, partnersData,] = await Promise.all([
-                    api.transferExchanges.getAll({ page, page_size: pageSize }),
-                    api.safePartnersApi.getAll(),
-                ]);
+    // Create a function to fetch data
+    const fetchData = async () => {
+        setIsLoading(true); // Start loading before the fetch
+        try {
+            const [exchangesData, partnersData,] = await Promise.all([
+                api.transferExchanges.getAll({ page, page_size: pageSize }),
+                api.safePartnersApi.getAll(),
+            ]);
 
-                setExchanges(exchangesData.data.results); // DRF returns {results, count, next, previous}
-                setCount(exchangesData.data.count);
-                setPartners(partnersData.data);
-            } catch (error) {
-                console.error("Failed to fetch data:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+            setExchanges(exchangesData.data.results);
+            setCount(exchangesData.data.count);
+            setPartners(partnersData.data);
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+        } finally {
+            setIsLoading(false); // End loading after the fetch
+        }
+    };
+
+    // Fetch data when the component mounts or when page/pageSize changes
+    useEffect(() => {
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, pageSize]);
 
 
@@ -65,6 +72,23 @@ const TransferxExchange = () => {
             ...prev,
             [name]: selectedOption ? selectedOption.value : ''
         }));
+    };
+    const handleDelete = useCallback((id) => {
+        setExchangeToDeleteId(id);
+        setShowConfirmModal(true);
+    }, []);
+
+    const confirmDelete = async () => {
+        try {
+            await api.transferExchanges.delete(exchangeToDeleteId);
+            console.log('Exchange deleted successfully!');
+            await fetchData();
+            setShowConfirmModal(false);
+            setExchangeToDeleteId(null);
+        } catch (err) {
+            console.error("Deletion error:", err);
+            setShowConfirmModal(false);
+        }
     };
 
     // Handle changes in the amount fields with conditional calculation
@@ -113,18 +137,22 @@ const TransferxExchange = () => {
     // Handle form submission to create a new exchange
     const handleFormSubmit = async (e) => {
         e.preventDefault();
+        setShowForm(false);
         if (isLoading) return;
+
+
         setIsLoading(true);
         try {
-            const response = await api.transferExchanges.create({
+            await api.transferExchanges.create({
                 ...newExchange,
                 usd_amount: parseFloat(newExchange.usd_amount),
                 iqd_amount: parseInt(newExchange.iqd_amount),
                 exchange_rate: parseFloat(newExchange.exchange_rate),
                 my_bonus: parseFloat(newExchange.my_bonus),
             });
-
-            setExchanges(prevExchanges => [response.data, ...prevExchanges]);
+            // Refetch all data from the API after successful creation
+            await fetchData();
+            // Reset the form fields
             setNewExchange({
                 partner: '',
                 exchange_type: 'USD_TO_IQD',
@@ -136,27 +164,48 @@ const TransferxExchange = () => {
             });
         } catch (error) {
             console.error("Failed to create transfer exchange:", error);
-        } finally {
-            setIsLoading(false);
+            setIsLoading(false); // Make sure loading state is turned off on error
         }
+    };
+    const resetForm = () => {
+        setNewExchange({
+            partner: '',
+            exchange_type: 'USD_TO_IQD',
+            usd_amount: '',
+            iqd_amount: '',
+            exchange_rate: '',
+            bonus_currency: 'USD',
+            my_bonus: 0,
+        });
+        setShowForm(false);
     };
 
 
     return (
         <div className="p-4 min-h-screen bg-slate-50-900 ml-0 sm:mt-6 md:mt-0 xsm:mt-6">
             <div className="mx-auto">
-                <div className="flex justify-between items-center mb-4"></div>
-                <h1 className="text-2xl font-bold text-white mb-6">ئاڵوگـۆڕی دراو</h1>
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold text-white mb-6">ئاڵوگـۆڕی دراو</h1>
+                    <button
+                        onClick={() => setShowForm(!showForm)}
+                        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                    >
+                        {showForm ? "لابردن" : "زیادکردن"}
+                        {showForm ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
+                    </button>
+                </div>
+
 
                 {/* Form to add a new transfer exchange */}
-                <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8">
-                    <h2 className="text-xl font-semibold text-white mb-4">ئاڵوگۆڕ کردن</h2>
-                    <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-white/80 mb-2">شەریـک</label>
-                            <Select
+                {showForm && (
+                    <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8">
+                        <h2 className="text-xl font-semibold text-white mb-4">ئاڵوگۆڕ کردن</h2>
+                        <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-white/80 mb-2">شەریـک</label>
+                                <Select
                                     name="partner"
-                                    menuPortalTarget={document.body} 
+                                    menuPortalTarget={document.body}
                                     options={partnerOptions}
                                     value={partnerOptions.find(option => option.value === newExchange.partner) || null}
                                     onChange={handleSelectChange}
@@ -165,130 +214,152 @@ const TransferxExchange = () => {
                                     isClearable
                                     isSearchable
                                 />
-                        </div>
-
-                        <div>
-                            <label className="block text-white/80 mb-2">جۆری ئاڵوگۆڕ</label>
-                            <select
-                                name="exchange_type"
-                                value={newExchange.exchange_type}
-                                onChange={handleInputChange}
-                                required
-                                className="w-full bg-slate-800/65 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                            >
-                                {Object.entries(ExchangeTypeChoices).map(([key, value]) => (
-                                    <option key={key} value={key} className='text-white'>{value}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-white/80 mb-2">نرخی دۆلار</label>
-                            <input
-                                type="number"
-                                name="exchange_rate"
-                                value={newExchange.exchange_rate}
-                                onChange={handleInputChange}
-                                required
-                                step="1000"
-                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-white/80 mb-2">بڕی دۆلار</label>
-                            <input
-                                type="number"
-                                name="usd_amount"
-                                value={newExchange.usd_amount}
-                                onChange={handleAmountChange}
-                                required
-                                step="1000"
-                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-white/80 mb-2">بڕی دینار</label>
-                            <input
-                                type="number"
-                                name="iqd_amount"
-                                value={newExchange.iqd_amount}
-                                onChange={handleAmountChange}
-                                step="100000"
-                                required
-                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-white/80 mb-2">بڕی عمولە</label>
-                            <input
-                                type="number"
-                                name="my_bonus"
-                                value={newExchange.my_bonus}
-                                onChange={handleAmountChange}
-                                step="100000"
-                                required
-                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-white/80 mb-2">دراوی عمولە</label>
-                            <div className="flex border border-white/20">
-                                <button
-                                    type="button"
-                                    onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "USD" } })}
-                                    className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${newExchange.bonus_currency === "USD"
-                                        ? "bg-blue-600 text-white"
-                                        : "text-white/70 hover:bg-white/10"
-                                        }`}
-                                >
-                                    <DollarSign size={18} /> USD
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "IQD" } })}
-                                    className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${newExchange.bonus_currency === "IQD"
-                                        ? "bg-blue-600 text-white"
-                                        : "text-white/70 hover:bg-white/10"
-                                        }`}
-                                >
-                                    <Wallet size={18} /> IQD
-                                </button>
                             </div>
-                        </div>
 
-                        <div className="flex flex-col items-start justify-center gap-2">
-                            <label className="flex items-center gap-2 text-white/80">
+                            <div>
+                                <label className="block text-white/80 mb-2">جۆری ئاڵوگۆڕ</label>
+                                <select
+                                    name="exchange_type"
+                                    value={newExchange.exchange_type}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full bg-slate-800/65 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                >
+                                    {Object.entries(ExchangeTypeChoices).map(([key, value]) => (
+                                        <option key={key} value={key} className='text-white'>{value}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-white/80 mb-2">نرخی دۆلار</label>
                                 <input
-                                    type="checkbox"
-                                    checked={isAutoCalculateEnabled}
-                                    onChange={(e) => setIsAutoCalculateEnabled(e.target.checked)}
-                                    className="form-checkbox text-blue-500 rounded-sm"
+                                    type="number"
+                                    name="exchange_rate"
+                                    value={newExchange.exchange_rate}
+                                    onChange={handleInputChange}
+                                    required
+                                    placeholder='1450 - 1452.5 - 1455.0 - 1457.5'
+                                    step="1000"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
                                 />
-                                <span>کاراکردنی گۆڕینی ئۆتۆماتیکی</span>
-                            </label>
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all disabled:opacity-50 mt-auto"
-                            >
-                                {isLoading ? 'ناردن...' : 'زیادکردن'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-white/80 mb-2">بڕی دۆلار</label>
+                                <input
+                                    type="number"
+                                    name="usd_amount"
+                                    value={newExchange.usd_amount}
+                                    onChange={handleAmountChange}
+                                    required
+                                    placeholder='0'
+                                    step="1000"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-white/80 mb-2">بڕی دینار</label>
+                                <input
+                                    type="number"
+                                    name="iqd_amount"
+                                    value={newExchange.iqd_amount}
+                                    onChange={handleAmountChange}
+                                    placeholder='0'
+                                    step="100000"
+                                    required
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2">بڕی عمولە</label>
+                                <input
+                                    type="number"
+                                    name="my_bonus"
+                                    value={newExchange.my_bonus}
+                                    onChange={handleAmountChange}
+                                    step="100000"
+                                    required
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 appearance-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-slate-300 mb-2">دراوی عمولە</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "USD" } })}
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${newExchange.bonus_currency === "USD"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                            }`}
+                                    >
+                                        <DollarSign size={18} />
+                                        <span className="text-sm mt-1">USD</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "IQD" } })}
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${newExchange.bonus_currency === "IQD"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                            }`}
+                                    >
+                                        <Wallet size={18} />
+                                        <span className="text-sm mt-1">IQD</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col items-start justify-center gap-2">
+                                <label className="flex items-center gap-2 text-white/80">
+                                    <input
+                                        type="checkbox"
+                                        checked={isAutoCalculateEnabled}
+                                        onChange={(e) => setIsAutoCalculateEnabled(e.target.checked)}
+                                        className="form-checkbox text-blue-500 rounded-sm"
+                                    />
+                                    <span>کاراکردنی گۆڕینی ئۆتۆماتیکی</span>
+                                </label>
+                                <div className="flex gap-3 pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={isLoading}
+                                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all"
+                                        >
+                                            {isLoading ? 'چاوەڕوانبە...' : 'ئاڵوگۆڕکردن'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={resetForm}
+                                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                                        >
+                                            لابردن
+                                        </button>
+                                    </div>
+                            </div>
+                        </form>
+                    </div>
+                )}
 
                 {/* List of exchanges */}
-                <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
+                <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     <div className="space-y-4">
                         {isLoading ? (
                             <div className="flex justify-center items-center h-64">
                                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
                             </div>
                         ) : exchanges.length === 0 ? (
-                            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center text-white/60">
-                                No exchanges found
+                            <div className="p-8 text-center text-white">
+                                <CreditCard size={48} className="mx-auto mb-4" />
+                                <p>هیچ مامەڵەیەک نەدۆزرایەوە</p>
+                                <button
+                                    onClick={() => setShowForm(true)}
+                                    className="mt-4 bg-blue-600/70 hover:bg-blue-700/70 text-white px-4 py-2 rounded-lg transition-all"
+                                >
+                                    زیادکردنی مامەڵەی نوێ
+                                </button>
                             </div>
                         ) : (
                             exchanges.map((exchange) => (
@@ -353,6 +424,15 @@ const TransferxExchange = () => {
                                                 </p>
                                             </div>
                                         </div>
+                                        <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-white/10">
+                                            <button
+                                                onClick={() => handleDelete(exchange.id)}
+                                                className="flex items-center gap-1 text-white/70 hover:text-red-400 transition-colors"
+                                                title="Delete"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))
@@ -381,7 +461,37 @@ const TransferxExchange = () => {
                     </button>
                 </div>
             )}
-
+            {showConfirmModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 w-full max-w-sm text-white">
+                        <div className="flex flex-col items-center mb-4">
+                            <AlertTriangle size={48} className="text-red-400 mb-3" />
+                            <h3 className="text-xl font-bold mb-2 text-center">دڵنیای؟</h3>
+                            <p className="text-white/80 text-center">
+                                ئەم کارە هەڵناوەشێتەوە.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 justify-center mt-4">
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <CheckCircle size={18} /> دڵنیابوون
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setShowConfirmModal(false)}
+                                className="flex-1 bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all"
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <X size={18} /> هەڵوەشاندنەوە
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

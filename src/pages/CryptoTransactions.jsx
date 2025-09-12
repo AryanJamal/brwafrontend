@@ -292,7 +292,7 @@ const CryptoTransactions = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">جۆری مامەڵە</label>
+                                <label className="block text-white/80 mb-2">بارودۆخ</label>
                                 <div className="flex gap-2">
                                     <button
                                         type="button"
@@ -318,7 +318,7 @@ const CryptoTransactions = () => {
                             </div>
 
                             <div>
-                                <label className="block text-white/80 mb-2">بارودۆخ</label>
+                                <label className="block text-white/80 mb-2">جۆری مامەڵە</label>
                                 <div className="flex gap-2">
                                     <button
                                         type="button"
@@ -620,14 +620,14 @@ const CryptoTransactions = () => {
                     </div>
                 </div>)}
 
-                <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
+                <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     {transactions.length === 0 ? (
-                        <div className="p-8 text-center text-slate-400">
+                        <div className="p-8 text-center text-white">
                             <CreditCard size={48} className="mx-auto mb-4" />
                             <p>هیچ مامەڵەیەک نەدۆزرایەوە</p>
                             <button
                                 onClick={() => setShowForm(true)}
-                                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
+                                className="mt-4 bg-blue-600/70 hover:bg-blue-700/70 text-white px-4 py-2 rounded-lg transition-all"
                             >
                                 زیادکردنی مامەڵەی نوێ
                             </button>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Select from 'react-select'; // Import Select from react-select
 import { api } from '../services/apiService';
-import { ArrowDown, ArrowUp, AlertTriangle, X, Clock, Filter, Search, CheckCircle, Trash2, XCircle, Wallet, DollarSign, Gift, FileText, Trash } from 'lucide-react';
+import { ArrowDown, ArrowUp, AlertTriangle, CreditCard,X, Clock, Filter, Search, CheckCircle, Trash2, XCircle, Wallet, DollarSign, Gift, FileText, Trash } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 
@@ -17,6 +17,7 @@ const IncomingMoney = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const [is_disabled, setDisabled] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showConfirmModal2, setShowConfirmModal2] = useState(false);
@@ -36,6 +37,7 @@ const IncomingMoney = () => {
         money_amount: '',
         currency: 'USD',
         to_partner: null,
+        is_received: false,
         to_name: '',
         to_number: '',
         status: 'Pending',
@@ -114,6 +116,8 @@ const IncomingMoney = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setDisabled(true);
+        setShowForm(false);
         try {
             await api.incomingMoney.create(formData);
             await fetchTransactions();
@@ -149,9 +153,9 @@ const IncomingMoney = () => {
     };
 
     // Confirm and execute the partner deletion
-    const confirmComplete = async (bonus,bonus2) => {
+    const confirmComplete = async (bonus, bonus2) => {
         try {
-            await api.incomingMoney.update(partnerToDeleteId, { status: 'Completed',my_bonus: bonus,partner_bonus:bonus2 });
+            await api.incomingMoney.update(partnerToDeleteId, { status: 'Completed', my_bonus: bonus, partner_bonus: bonus2 });
             await fetchTransactions();
 
         } catch (err) {
@@ -172,6 +176,7 @@ const IncomingMoney = () => {
             money_amount: '',
             currency: 'USD',
             to_partner: null,
+            is_received: false,
             to_name: '',
             to_number: '',
             status: 'Pending',
@@ -261,7 +266,7 @@ const IncomingMoney = () => {
                                         name="searchQuery"
                                         value={filters.searchQuery}
                                         onChange={handleFilterChange}
-                                        className="w-full bg-white/5 border border-white/20 rounded-lg pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                        className="w-full bg-white/5 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                         placeholder="گەڕان بەدوای: بڕی پارە، ناو، ژمارە"
                                     />
                                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50" />
@@ -272,7 +277,7 @@ const IncomingMoney = () => {
                                 <Select
                                     name="status"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    
+
                                     value={statusOptions.find(option => option.value === filters.status)}
                                     onChange={(selectedOption) => handleFilterSelectChange('status', selectedOption)}
                                     options={statusOptions}
@@ -288,7 +293,7 @@ const IncomingMoney = () => {
                                     name="startDate"
                                     value={filters.startDate}
                                     onChange={handleFilterChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                 />
                             </div>
                             <div>
@@ -298,14 +303,14 @@ const IncomingMoney = () => {
                                     name="endDate"
                                     value={filters.endDate}
                                     onChange={handleFilterChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                 />
                             </div>
                             <div>
                                 <label className="block text-white/80 mb-2">لە هاوبەش:</label>
                                 <Select
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    
+
                                     name="fromPartner"
                                     value={partnerOptions.find(option => option.value === filters.fromPartner)}
                                     onChange={(selectedOption) => handleFilterSelectChange('fromPartner', selectedOption)}
@@ -319,7 +324,7 @@ const IncomingMoney = () => {
                                 <label className="block text-white/80 mb-2">بۆ هاوبەش:</label>
                                 <Select
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    
+
                                     name="toPartner"
                                     value={partnerOptions.find(option => option.value === filters.toPartner)}
                                     onChange={(selectedOption) => handleFilterSelectChange('toPartner', selectedOption)}
@@ -332,7 +337,7 @@ const IncomingMoney = () => {
                             <div className="lg:col-span-1 flex items-end">
                                 <button
                                     type="submit"
-                                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
+                                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg transition-all"
                                 >
                                     گه‌ڕان
                                 </button>
@@ -353,11 +358,11 @@ const IncomingMoney = () => {
 
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-white/80 mb-2">هاتووە لە:</label>
+                                <label className="block text-white/80 mb-2">هاتووە لە: <span className='text-md text-red-500'>*</span></label>
                                 <Select
                                     name="from_partner"
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    
+
                                     value={partnerOptions.find(option => option.value === formData.from_partner)}
                                     onChange={(selectedOption) => handleSelectChange('from_partner', selectedOption)}
                                     options={partnerOptions}
@@ -370,7 +375,6 @@ const IncomingMoney = () => {
                                 <label className="block text-white/80 mb-2">هاتووە بۆ:</label>
                                 <Select
                                     menuPortalTarget={document.body}   // 👈 attach to body
-                                    
                                     name="to_partner"
                                     value={partnerOptions.find(option => option.value === formData.to_partner)}
                                     onChange={(selectedOption) => handleSelectChange('to_partner', selectedOption)}
@@ -381,16 +385,42 @@ const IncomingMoney = () => {
                                 />
                             </div>
                             <div>
+                                <label className="block text-white/80 mb-2">دانان و هەڵگرتن</label>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleInputChange({ target: { name: "is_received", value: false } })}
+                                        className={`w-full text-center border border-white/20 py-3 rounded-md transition-all ${formData.is_received === false
+                                            ? "bg-green-600 text-white"
+                                            : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        دانان
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleInputChange({ target: { name: "is_received", value: true } })}
+                                        className={`w-full text-center border border-white/20 py-3 rounded-md transition-all ${formData.is_received === true
+                                            ? "bg-red-500 text-white"
+                                            : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        هەڵگرتن
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
                                 <label className="block text-white/80 mb-2">هاتووە بۆ:</label>
                                 <input
                                     type="text"
                                     name="to_name"
                                     value={formData.to_name}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                     placeholder="ناوی وەرگر.."
                                 />
                             </div>
+
                             <div>
                                 <label className="block text-white/80 mb-2">ژمارەی وەرگر..</label>
                                 <input
@@ -398,59 +428,75 @@ const IncomingMoney = () => {
                                     name="to_number"
                                     value={formData.to_number}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                     placeholder="ژمارەی مۆبایل"
                                 />
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">بڕی هاتـوو:</label>
+                                <label className="block text-white/80 mb-2">بڕی هاتـوو: <span className='text-md text-red-500'>*</span></label>
                                 <input
                                     type="number"
                                     name="money_amount"
                                     value={formData.money_amount}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                     required
                                     step="0.01"
                                     min="0"
                                 />
                             </div>
+                            {/* Currency */}
                             <div>
-                                <label className="block text-white/80 mb-2">دراوی هاتوو</label>
-                                <div className="flex border border-white/20">
+                                <label className="block text-slate-300 mb-2">دراوی هاتوو:</label>
+                                <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "currency", value: "USD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${formData.currency === "USD"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "USD"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <DollarSign size={18} /> USD
+                                        <DollarSign size={18} />
+                                        <span className="text-sm mt-1">USD</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "currency", value: "IQD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${formData.currency === "IQD"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "IQD"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <Wallet size={18} /> IQD
+                                        <Wallet size={18} />
+                                        <span className="text-sm mt-1">IQD</span>
                                     </button>
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-white/80 mb-2">جۆری مامەڵە</label>
-                                <Select
-                                    name="status"
-                                    menuPortalTarget={document.body}   // 👈 attach to body
-                                    
-                                    value={statusOptions.find(option => option.value === formData.status)}
-                                    onChange={(selectedOption) => handleSelectChange('status', selectedOption)}
-                                    options={statusOptions}
-                                    styles={selectStyles}
-                                />
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleInputChange({ target: { name: "status", value: "Pending" } })}
+                                        className={`w-full text-center border border-white/20 py-3 rounded-md transition-all ${formData.status === "Pending"
+                                            ? "bg-amber-600 text-white"
+                                            : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        قەرز
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleInputChange({ target: { name: "status", value: "Completed" } })}
+                                        className={`w-full text-center border border-white/20 py-3 rounded-md transition-all ${formData.status === "Completed"
+                                            ? "bg-green-600 text-white"
+                                            : "text-white/70 hover:bg-white/10"
+                                            }`}
+                                    >
+                                        واصڵ
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-white/80 mb-2">عمولە بۆ دوکان</label>
@@ -459,7 +505,7 @@ const IncomingMoney = () => {
                                     name="my_bonus"
                                     value={formData.my_bonus}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                 />
                             </div>
                             <div>
@@ -469,31 +515,33 @@ const IncomingMoney = () => {
                                     name="partner_bonus"
                                     value={formData.partner_bonus}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                 />
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">دراوی عمولە</label>
-                                <div className="flex border border-white/20">
+                                <label className="block text-slate-300 mb-2">دراوی عمولە</label>
+                                <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "USD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${formData.bonus_currency === "USD"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.bonus_currency === "USD"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <DollarSign size={18} /> USD
+                                        <DollarSign size={18} />
+                                        <span className="text-sm mt-1">USD</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleInputChange({ target: { name: "bonus_currency", value: "IQD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${formData.bonus_currency === "IQD"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.bonus_currency === "IQD"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <Wallet size={18} /> IQD
+                                        <Wallet size={18} />
+                                        <span className="text-sm mt-1">IQD</span>
                                     </button>
                                 </div>
                             </div>
@@ -510,6 +558,7 @@ const IncomingMoney = () => {
                             <div className="md:col-span-2 flex gap-3 pt-2">
                                 <button
                                     type="submit"
+                                    disabled={is_disabled}
                                     className="flex items-center gap-2 bg-blue-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
                                 >
                                     {"دروست کردن"}
@@ -525,10 +574,17 @@ const IncomingMoney = () => {
                         </form>
                     </div>
                 )}
-                <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
+                <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     {transactions.length === 0 ? (
-                        <div className="col-span-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center text-white/60">
-                            هیچ حەواڵەیەکی هاتوو نییە
+                        <div className="p-8 text-center text-white">
+                            <CreditCard size={48} className="mx-auto mb-4" />
+                            <p>هیچ مامەڵەیەک نەدۆزرایەوە</p>
+                            <button
+                                onClick={() => setShowForm(true)}
+                                className="mt-4 bg-blue-600/70 hover:bg-blue-700/70 text-white px-4 py-2 rounded-lg transition-all"
+                            >
+                                زیادکردنی مامەڵەی نوێ
+                            </button>
                         </div>
                     ) : (
                         <>
@@ -711,7 +767,7 @@ const IncomingMoney = () => {
 
                         <div className="flex gap-3 justify-center mt-4">
                             <button
-                                onClick={() => confirmComplete(bonus,bonus2)} // Pass the bonus value here
+                                onClick={() => confirmComplete(bonus, bonus2)} // Pass the bonus value here
                                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
                             >
                                 <span className="flex items-center justify-center gap-2">

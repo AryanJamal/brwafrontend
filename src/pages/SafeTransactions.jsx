@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { Plus, ArrowUp, Wallet, Coins, ArrowDown, Clock, XCircle, User, DollarSign, FileText, ArrowLeftRight, Trash2 } from 'lucide-react';
+import { Plus, ArrowUp, CreditCard, Wallet, Coins, ArrowDown, Clock, XCircle, User, DollarSign, FileText, ArrowLeftRight, Trash2 } from 'lucide-react';
 import formatDate from '../components/formatdate';
-import selectStyles from '../components/styles'; 
+import selectStyles from '../components/styles';
 import Select from 'react-select';
 
 const SafeTransactions = () => {
@@ -140,7 +140,7 @@ const SafeTransactions = () => {
         value: partner.id,
         label: `${partner.partner.name} - ${partner.safe_type.name}`
     }));
-    
+
     const transactionTypeOptions = [
         { value: 'ADD', label: 'زیادکردن' },
         { value: 'REMOVE', label: 'هەڵگرتن' }
@@ -195,14 +195,14 @@ const SafeTransactions = () => {
                                 <div className="flex flex-col sm:flex-row gap-4">
                                     <button
                                         onClick={() => setFormType('transaction')}
-                                        className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
+                                        className="flex-1 flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 text-white px-4 py-4 rounded-lg transition-all"
                                     >
                                         <Wallet size={18} />
                                         زیادکردن/هەڵگرتن
                                     </button>
                                     <button
                                         onClick={() => setFormType('transfer')}
-                                        className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
+                                        className="flex-1 flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-4 rounded-lg transition-all"
                                     >
                                         <ArrowLeftRight size={18} />
                                         گواستنەوە
@@ -252,7 +252,7 @@ const SafeTransactions = () => {
                                             name="money_amount"
                                             value={formData.money_amount}
                                             onChange={handleInputChange}
-                                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                            className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                             required
                                             step="0.01"
                                             min="0"
@@ -260,34 +260,40 @@ const SafeTransactions = () => {
                                     </div>
                                     {/* Currency */}
                                     <div>
-                                        <label className="block text-white/80 mb-2">جۆری دراو</label>
-                                        <div className="flex border border-white/20 rounded-lg overflow-hidden">
+                                        <label className="block text-slate-300 mb-2">جۆری دراو</label>
+                                        <div className="grid grid-cols-3 gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange({ target: { name: "currency", value: "USDT" } })}
-                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
-                                                    formData.currency === "USDT" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
-                                                }`}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "USDT"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
                                             >
-                                                <Coins size={18} /> USDT
+                                                <Coins size={18} />
+                                                <span className="text-sm mt-1">USDT</span>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange({ target: { name: "currency", value: "USD" } })}
-                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
-                                                    formData.currency === "USD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
-                                                }`}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "USD"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
                                             >
-                                                <DollarSign size={18} /> USD
+                                                <DollarSign size={18} />
+                                                <span className="text-sm mt-1">USD</span>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange({ target: { name: "currency", value: "IQD" } })}
-                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
-                                                    formData.currency === "IQD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
-                                                }`}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "IQD"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
                                             >
-                                                <Wallet size={18} /> IQD
+                                                <Wallet size={18} />
+                                                <span className="text-sm mt-1">IQD</span>
                                             </button>
                                         </div>
                                     </div>
@@ -368,42 +374,48 @@ const SafeTransactions = () => {
                                             name="money_amount"
                                             value={formData.money_amount}
                                             onChange={handleInputChange}
-                                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                            className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                             required
+                                            placeholder='0'
                                             step="0.01"
                                             min="0"
                                         />
                                     </div>
-                                    {/* Currency */}
                                     <div>
-                                        <label className="block text-white/80 mb-2">جۆری دراو</label>
-                                        <div className="flex border border-white/20 rounded-lg overflow-hidden">
+                                        <label className="block text-slate-300 mb-2">جۆری دراو</label>
+                                        <div className="grid grid-cols-3 gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange({ target: { name: "currency", value: "USDT" } })}
-                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
-                                                    formData.currency === "USDT" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
-                                                }`}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "USDT"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
                                             >
-                                                <Coins size={18} /> USDT
+                                                <Coins size={18} />
+                                                <span className="text-sm mt-1">USDT</span>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange({ target: { name: "currency", value: "USD" } })}
-                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
-                                                    formData.currency === "USD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
-                                                }`}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "USD"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
                                             >
-                                                <DollarSign size={18} /> USD
+                                                <DollarSign size={18} />
+                                                <span className="text-sm mt-1">USD</span>
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleInputChange({ target: { name: "currency", value: "IQD" } })}
-                                                className={`flex-1 flex items-center justify-center gap-1 py-2 transition-all ${
-                                                    formData.currency === "IQD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
-                                                }`}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "IQD"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
                                             >
-                                                <Wallet size={18} /> IQD
+                                                <Wallet size={18} />
+                                                <span className="text-sm mt-1">IQD</span>
                                             </button>
                                         </div>
                                     </div>
@@ -442,85 +454,94 @@ const SafeTransactions = () => {
                 )}
 
                 {/* Transactions List as Cards */}
-                <div className="space-y-4 ">
-                    {transactions.length === 0 ? (
-                        <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-6 text-center text-white/60">
-                            هیچ داتایەک نەدۆزرایەوە
-                        </div>
-                    ) : (
-                        transactions.map((transaction) => (
-                            <div key={transaction.id} className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="flex items-center gap-2 text-lg font-bold text-white">
-                                        {getStatusIcon(transaction.transaction_type)}
-                                        <span>{getTypeLabel(transaction.transaction_type)}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm text-white/60">
-                                        <Clock size={16} />
-                                        <span>{formatDate(transaction.created_at)}</span>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {transaction.from_safepartner && (
-                                        <div className="flex items-center gap-2">
-                                            <ArrowUp size={20} className="text-red-400" />
-                                            <div className="text-sm">
-                                                <p className="font-medium text-white/80">لە قاسەی</p>
-                                                <p className="text-white">{transaction.from_safepartner?.partner?.name || 'Unknown'}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {transaction.to_safepartner && (
-                                        <div className="flex items-center gap-2">
-                                            <ArrowDown size={20} className="text-green-400" />
-                                            <div className="text-sm">
-                                                <p className="font-medium text-white/80">بۆ قاسەی</p>
-                                                <p className="text-white">{transaction.to_safepartner?.partner?.name || 'Unknown'}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {transaction.partner && (
-                                        <div className="flex items-center gap-2">
-                                            <User size={20} className="text-purple-400" />
-                                            <div className="text-sm">
-                                                <p className="font-medium text-white/80">شەریک</p>
-                                                <p className="text-white">{transaction.partner?.partner.name || 'Unknown'}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-2">
-                                        <DollarSign size={20} className="text-green-400" />
-                                        <div className="text-sm">
-                                            <p className="font-medium text-white/80">بڕی پارە</p>
-                                            <p className="text-white">
-                                                {parseFloat(transaction.money_amount).toLocaleString()} {transaction.currency}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {transaction.note && (
-                                        <div className="flex items-center gap-2 col-span-1 sm:col-span-2">
-                                            <FileText size={20} className="text-blue-400" />
-                                            <div className="text-sm">
-                                                <p className="font-medium text-white/80">تێبینی</p>
-                                                <p className="text-white">{transaction.note}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-white/10">
-                                    <button
-                                        onClick={() => handleDelete(transaction.id)}
-                                        className="flex items-center gap-1 text-white/70 hover:text-red-400 transition-colors"
-                                        title="Delete"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
+                <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
+                    <div className="space-y-4 ">
+                        {transactions.length === 0 ? (
+                            <div className="p-8 text-center text-white">
+                                <CreditCard size={48} className="mx-auto mb-4" />
+                                <p>هیچ مامەڵەیەک نەدۆزرایەوە</p>
+                                <button
+                                    onClick={() => setShowForm(true)}
+                                    className="mt-4 bg-blue-600/70 hover:bg-blue-700/70 text-white px-4 py-2 rounded-lg transition-all"
+                                >
+                                    زیادکردنی مامەڵەی نوێ
+                                </button>
                             </div>
-                        ))
-                    )}
+                        ) : (
+                            transactions.map((transaction) => (
+                                <div key={transaction.id} className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div className="flex items-center gap-2 text-lg font-bold text-white">
+                                            {getStatusIcon(transaction.transaction_type)}
+                                            <span>{getTypeLabel(transaction.transaction_type)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-white/60">
+                                            <Clock size={16} />
+                                            <span>{formatDate(transaction.created_at)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {transaction.from_safepartner && (
+                                            <div className="flex items-center gap-2">
+                                                <ArrowUp size={20} className="text-red-400" />
+                                                <div className="text-sm">
+                                                    <p className="font-medium text-white/80">لە قاسەی</p>
+                                                    <p className="text-white">{transaction.from_safepartner?.partner?.name || 'Unknown'}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {transaction.to_safepartner && (
+                                            <div className="flex items-center gap-2">
+                                                <ArrowDown size={20} className="text-green-400" />
+                                                <div className="text-sm">
+                                                    <p className="font-medium text-white/80">بۆ قاسەی</p>
+                                                    <p className="text-white">{transaction.to_safepartner?.partner?.name || 'Unknown'}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {transaction.partner && (
+                                            <div className="flex items-center gap-2">
+                                                <User size={20} className="text-purple-400" />
+                                                <div className="text-sm">
+                                                    <p className="font-medium text-white/80">شەریک</p>
+                                                    <p className="text-white">{transaction.partner?.partner.name || 'Unknown'}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-2">
+                                            <DollarSign size={20} className="text-green-400" />
+                                            <div className="text-sm">
+                                                <p className="font-medium text-white/80">بڕی پارە</p>
+                                                <p className="text-white">
+                                                    {parseFloat(transaction.money_amount).toLocaleString()} {transaction.currency}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {transaction.note && (
+                                            <div className="flex items-center gap-2 col-span-1 sm:col-span-2">
+                                                <FileText size={20} className="text-blue-400" />
+                                                <div className="text-sm">
+                                                    <p className="font-medium text-white/80">تێبینی</p>
+                                                    <p className="text-white">{transaction.note}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-white/10">
+                                        <button
+                                            onClick={() => handleDelete(transaction.id)}
+                                            className="flex items-center gap-1 text-white/70 hover:text-red-400 transition-colors"
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
