@@ -2,9 +2,9 @@
 import axios from 'axios';
 
 // Configure Axios defaults
-// axios.defaults.baseURL = 'https://brwa-exchange.com/api';
+axios.defaults.baseURL = 'https://brwa-exchange.com/api';
 // for local:
-axios.defaults.baseURL = 'http://127.0.0.1:8000/api';
+// axios.defaults.baseURL = 'http://127.0.0.1:8000/api';
 axios.defaults.xsrfCookieName = 'csrftoken';
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
 axios.defaults.timeout = 30000; // 30 second timeout
@@ -53,8 +53,8 @@ apiClient.interceptors.response.use(
 
             try {
                 const refresh = localStorage.getItem("refresh");
-                // const res = await axios.post("https://brwa-exchange.com/api/token/refresh/", { refresh });
-                const res = await axios.post("http://127.0.0.1:8000/api/token/refresh/", { refresh });
+                const res = await axios.post("https://brwa-exchange.com/api/token/refresh/", { refresh });
+                // const res = await axios.post("http://127.0.0.1:8000/api/token/refresh/", { refresh });
 
                 localStorage.setItem("access", res.data.access);
                 apiClient.defaults.headers.common["Authorization"] = `Bearer ${res.data.access}`;
