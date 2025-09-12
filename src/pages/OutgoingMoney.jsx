@@ -373,7 +373,7 @@ const OutgoingMoney = () => {
                                     options={partnerOptions}
                                     isClearable
                                     isSearchable
-                                    placeholder="نوسینگە دیاری بکە.."
+                                    placeholder="دەرکردن لە نوسینگەی.."
                                     styles={selectStyles}
                                 />
                             </div>
@@ -389,7 +389,7 @@ const OutgoingMoney = () => {
                                     isClearable
                                     isSearchable
                                     options={partnerOptions}
-                                    placeholder="دیاری بکە..."
+                                    placeholder="زیادکردن بۆ..."
                                     styles={selectStyles}
                                     required
                                 />
@@ -457,6 +457,7 @@ const OutgoingMoney = () => {
                                 <input
                                     type="number"
                                     name="money_amount"
+                                    placeholder='ئەو بڕەی زیاد دەکرێت..'
                                     value={formData.money_amount}
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
@@ -519,7 +520,7 @@ const OutgoingMoney = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">عمولە بۆ دوکان:</label>
+                                <label className="block text-white/80 mb-2">عمولە بۆ دوکان (زیادکردن بۆ قاسە)</label>
                                 <input
                                     type="number"
                                     name="my_bonus"
@@ -529,7 +530,7 @@ const OutgoingMoney = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">عمولە بۆ نوسینگەی نێردەر:</label>
+                                <label className="block text-white/80 mb-2">عمولە بۆ نوسینگەی نێردەر (زیادکردن بۆ قاسە)</label>
                                 <input
                                     type="number"
                                     name="partner_bonus"

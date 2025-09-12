@@ -366,7 +366,7 @@ const IncomingMoney = () => {
                                     value={partnerOptions.find(option => option.value === formData.from_partner)}
                                     onChange={(selectedOption) => handleSelectChange('from_partner', selectedOption)}
                                     options={partnerOptions}
-                                    placeholder="نوسینگە دیاری بکە.."
+                                    placeholder="دەرکردن لە نوسینگەی..."
                                     isClearable
                                     styles={selectStyles}
                                 />
@@ -379,7 +379,7 @@ const IncomingMoney = () => {
                                     value={partnerOptions.find(option => option.value === formData.to_partner)}
                                     onChange={(selectedOption) => handleSelectChange('to_partner', selectedOption)}
                                     options={partnerOptions}
-                                    placeholder="دیاری بکە..."
+                                    placeholder="زیادکردن بۆ..."
                                     isClearable
                                     styles={selectStyles}
                                 />
@@ -437,6 +437,7 @@ const IncomingMoney = () => {
                                 <input
                                     type="number"
                                     name="money_amount"
+                                    placeholder='ئەو بڕەی زیاد دەکرێت..'
                                     value={formData.money_amount}
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
@@ -499,7 +500,7 @@ const IncomingMoney = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">عمولە بۆ دوکان</label>
+                                <label className="block text-white/80 mb-2">عمولە بۆ دوکان (زیادکردن بۆ قاسە)</label>
                                 <input
                                     type="number"
                                     name="my_bonus"
@@ -509,7 +510,7 @@ const IncomingMoney = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">عمولە بۆ نوسینگەی نێردەر</label>
+                                <label className="block text-white/80 mb-2">عمولە بۆ نوسینگەی نێردەر (زیادکردن بۆ قاسە)</label>
                                 <input
                                     type="number"
                                     name="partner_bonus"

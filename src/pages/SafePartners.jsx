@@ -606,7 +606,7 @@ const SafePartners = () => {
                             setSafeModal(true);
                         }
                     }}
-                    className="w-full flex items-center justify-center mb-4 gap-2 bg-gray-700/60 hover:bg-gray-700/80 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                    className="w-full flex items-center justify-center mb-4 gap-2 bg-amber-600/40 hover:bg-amber-600/60 backdrop-blur-sm border border-white/20 text-white px-4 py-3 rounded-lg transition-all"
                 >
                     {SafeModal ? (
                         <>
@@ -655,19 +655,19 @@ const SafePartners = () => {
                                 <div className="grid grid-cols-1 gap-2">
                                     <div className="bg-white/5 rounded p-2">
                                         <div className="text-white/60 text-xs">USD</div>
-                                        <div className="text-white font-mono">
+                                        <div className={`font-mono overflow-hidden ${safeTotal.usd < 0 ? 'text-yellow-500' : 'text-white'}`}>
                                             {safeTotal.usd?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}
                                         </div>
                                     </div>
                                     <div className="bg-white/5 rounded p-2">
                                         <div className="text-white/60 text-xs">IQD</div>
-                                        <div className="text-white font-mono overflow-hidden">
+                                        <div className={`font-mono overflow-hidden ${safeTotal.iqd < 0 ? 'text-yellow-500' : 'text-white'}`}>
                                             {safeTotal.iqd?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0"}
                                         </div>
                                     </div>
                                     <div className="bg-white/5 rounded p-2">
                                         <div className="text-white/60 text-xs">USDT</div>
-                                        <div className="text-white font-mono overflow-hidden">
+                                        <div className={`font-mono overflow-hidden ${safeTotal.usdt < 0 ? 'text-yellow-500' : 'text-white'}`}>
                                             {safeTotal.usdt?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}
                                         </div>
                                     </div>

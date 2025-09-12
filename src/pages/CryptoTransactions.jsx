@@ -286,7 +286,7 @@ const CryptoTransactions = () => {
                                     value={partnerOptions.find(option => option.value === formData.partner) || null}
                                     onChange={handleSelectChange}
                                     styles={selectStyles}
-                                    placeholder="شەریک دیاری بکە.."
+                                    placeholder="شەریک و قاسەی عمولە دیاری بکە.."
                                     isClearable
                                     isSearchable
                                 />
@@ -409,7 +409,7 @@ const CryptoTransactions = () => {
                                     value={cryptoSafeOptions.find(option => option.value === formData.crypto_safe) || null}
                                     onChange={handleSelectChange}
                                     styles={selectStyles}
-                                    placeholder="شوێنی کریپتۆ دیاری بکە.."
+                                    placeholder="بڕی USDT بۆ.."
                                     isClearable
                                     isSearchable
                                     required
@@ -425,7 +425,7 @@ const CryptoTransactions = () => {
                                     value={paymentSafeOptions.find(option => option.value === formData.payment_safe) || null}
                                     onChange={handleSelectChange}
                                     styles={selectStyles}
-                                    placeholder="شوێنی پارە دیاری بکە.."
+                                    placeholder="نرخی USDT بۆ.."
                                     isClearable
                                     isSearchable
                                     required
@@ -438,6 +438,7 @@ const CryptoTransactions = () => {
                                     type="number"
                                     name="bonus"
                                     value={formData.bonus}
+                                    placeholder='زیادکردن بۆ شوێنی پارە..'
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5  rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
 
@@ -490,6 +491,7 @@ const CryptoTransactions = () => {
                                 <input
                                     type="text"
                                     name="client_name"
+                                    placeholder='ناوی کڕیار یان فرۆشیار'
                                     value={formData.client_name}
                                     onChange={handleInputChange}
                                     className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -505,7 +507,7 @@ const CryptoTransactions = () => {
                                     value={partnerOptions.find(option => option.value === formData.partner_client) || null}
                                     onChange={handleSelectChange}
                                     styles={selectStyles}
-                                    placeholder="ناوی دیاری بکە..."
+                                    placeholder="ناو دیاری بکە..."
                                     isClearable
                                     isSearchable
                                 />

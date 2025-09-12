@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { Plus, ArrowUp, CreditCard, Wallet, Coins, ArrowDown, Clock, XCircle, User, DollarSign, FileText, ArrowLeftRight, Trash2 } from 'lucide-react';
+import { Plus, ArrowUp, CreditCard, Wallet, Coins, ArrowDown, Clock, XCircle, User, DollarSign, FileText, ArrowLeftRight, Trash2, BanknoteX } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 import Select from 'react-select';
@@ -80,6 +80,14 @@ const SafeTransactions = () => {
                     currency: formData.currency,
                     note: formData.note
                 };
+            } else if (formType === 'expense') {
+                dataToSend = {
+                    partner: formData.partner,
+                    transaction_type: 'EXPENSE',
+                    money_amount: formData.money_amount,
+                    currency: formData.currency,
+                    note: formData.note
+                };
             }
 
             await api.safeTransactions.create(dataToSend);
@@ -123,6 +131,7 @@ const SafeTransactions = () => {
             case 'ADD': return <ArrowDown className="text-green-400" size={18} />;
             case 'REMOVE': return <ArrowUp className="text-red-400" size={18} />;
             case 'TRANSFER': return <ArrowLeftRight className="text-yellow-400" size={18} />;
+            case 'EXPENSE': return <BanknoteX className="text-red-400" size={18} />;
             default: return <Clock className="text-amber-400" size={18} />;
         }
     };
@@ -132,6 +141,7 @@ const SafeTransactions = () => {
             case 'ADD': return 'زیادکردن';
             case 'REMOVE': return 'هەڵگرتن';
             case 'TRANSFER': return 'گواستنەوە';
+            case 'EXPENSE': return 'خەرجی';
             default: return type;
         }
     };
@@ -207,6 +217,13 @@ const SafeTransactions = () => {
                                         <ArrowLeftRight size={18} />
                                         گواستنەوە
                                     </button>
+                                    <button
+                                        onClick={() => setFormType('expense')}
+                                        className="flex-1 flex items-center justify-center gap-2 bg-red-700 hover:bg-red-800 text-white px-4 py-4 rounded-lg transition-all"
+                                    >
+                                        <BanknoteX size={18} />
+                                        خەرجی
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -242,6 +259,112 @@ const SafeTransactions = () => {
                                             onChange={selectedOption => handleSelectChange('transaction_type', selectedOption)}
                                             value={transactionTypeOptions.find(option => option.value === formData.transaction_type)}
                                             styles={selectStyles}
+                                        />
+                                    </div>
+                                    {/* Money Amount */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">بڕی پارە</label>
+                                        <input
+                                            type="number"
+                                            name="money_amount"
+                                            value={formData.money_amount}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                            required
+                                            step="0.01"
+                                            min="0"
+                                        />
+                                    </div>
+                                    {/* Currency */}
+                                    <div>
+                                        <label className="block text-slate-300 mb-2">جۆری دراو</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: "currency", value: "USDT" } })}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "USDT"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
+                                            >
+                                                <Coins size={18} />
+                                                <span className="text-sm mt-1">USDT</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: "currency", value: "USD" } })}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "USD"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
+                                            >
+                                                <DollarSign size={18} />
+                                                <span className="text-sm mt-1">USD</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: "currency", value: "IQD" } })}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${formData.currency === "IQD"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
+                                            >
+                                                <Wallet size={18} />
+                                                <span className="text-sm mt-1">IQD</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {/* Note */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">تێـبینی</label>
+                                        <textarea
+                                            name="note"
+                                            value={formData.note}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                            rows="3"
+                                        />
+                                    </div>
+                                    {/* Form Actions */}
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={isLoading}
+                                            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
+                                        >
+                                            {isLoading ? 'ناردن...' : 'زیادکردن'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={resetForm}
+                                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                                        >
+                                            لابردن
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+                        {formType === 'expense' && (
+                            <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-semibold text-white">خەرجی</h2>
+                                    <button onClick={resetForm} className="text-white/70 hover:text-white">
+                                        <XCircle size={20} />
+                                    </button>
+                                </div>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    {/* Partner */}
+                                    <div>
+                                        <label className="block text-white/80 mb-2">شەریک و قاسە</label>
+                                        <Select
+                                            name="partner"
+                                            options={partnerOptions}
+                                            onChange={selectedOption => handleSelectChange('partner', selectedOption)}
+                                            value={partnerOptions.find(option => option.value === formData.partner)}
+                                            styles={selectStyles}
+                                            placeholder="شەریک دیاری بکە.."
+                                            isClearable
                                         />
                                     </div>
                                     {/* Money Amount */}
