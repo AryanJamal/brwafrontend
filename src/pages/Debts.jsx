@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { Plus, Coins, Trash2, X, Check, DollarSign, Phone, Wallet, Receipt } from 'lucide-react';
+import { Plus, Coins, Trash2, X, Check, DollarSign, Filter, XCircle, Phone, Wallet, Receipt } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 import Select from 'react-select';
@@ -12,8 +12,17 @@ const Debts = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showDebtForm, setShowDebtForm] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
     const [showRepaymentForm, setShowRepaymentForm] = useState(false);
+    const [search, setSearch] = useState("");
+    const [filterTransactionType, setFilterTransactionType] = useState(null);
     const [selectedDebt, setSelectedDebt] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [filterSafePartner, setFilterSafePartner] = useState(null);
+    const [filterSafe, setFilterSafe] = useState(null);
+    // eslint-disable-next-line no-unused-vars
+    const [pageSize, setPageSize] = useState(30); // same as backend default
+    const [totalPages, setTotalPages] = useState(1);
 
     const [debtFormData, setDebtFormData] = useState({
         debt_safe_id: '',
@@ -38,27 +47,51 @@ const Debts = () => {
     }));
 
     // Fetch initial data
+    const fetchData = async (params = {}) => {
+        try {
+            setLoading(true);
+            const [debtsRes, safesRes, safePartners] = await Promise.all([
+                api.debt.getAll({
+                    page: currentPage,
+                    page_size: pageSize,
+                    ...params
+                }),
+                api.safeTypes.getAll(),
+                api.safePartnersApi.getAll()
+            ]);
+
+            setDebts(debtsRes.data.results);
+            setTotalPages(Math.ceil(debtsRes.data.count / pageSize));
+            setSafes(safesRes.data);
+            setSafePartners(safePartners.data);
+            setLoading(false);
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [debtsRes, safesRes, safePartners] = await Promise.all([
-                    api.debt.getAll(),
-                    api.safeTypes.getAll(),
-                    api.safePartnersApi.getAll()
-                ]);
-
-                setDebts(debtsRes.data);
-                setSafes(safesRes.data);
-                setSafePartners(safePartners.data);
-                setLoading(false);
-            } catch (err) {
-                setError(err.message);
-                setLoading(false);
-            }
-        };
-
         fetchData();
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage, pageSize]);
+    const handleFilterSubmit = () => {
+        const params = {};
+        if (search) params.search = search;
+        if (filterTransactionType) params.transaction_type = filterTransactionType.value;
+        if (filterSafePartner) params.safe_partner_id = filterSafePartner.value;
+        if (filterSafe) params.debt_safe_id = filterSafe.value;
+
+        fetchData(params);
+    };
+    const handleResetFilters = () => {
+        setShowFilters(false);
+        setSearch("");
+        setFilterTransactionType(null);
+        setFilterSafePartner(null);
+        setFilterSafe(null);
+        fetchData();
+    };
+
 
     const handleSelectChange = (selectedOption, actionMeta) => {
         const { name } = actionMeta;
@@ -212,13 +245,29 @@ const Debts = () => {
             <div className="mx-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-white">بەڕێوەبردنی قەرز</h1>
-                    <button
-                        onClick={() => setShowDebtForm(!showDebtForm)}
-                        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
-                    >
-                        <Plus size={18} />
-                        {showDebtForm ? "لابردن" : "زیادکردن"}
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => {
+                                if (showFilters) {
+                                    setShowFilters(false);
+                                } else {
+                                    setShowDebtForm(false);
+                                    setShowFilters(true);
+                                }
+                            }}
+                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                        >
+                            <Filter size={18} />
+                            {showFilters ? "لابردن" : "فلتەرکردن"}
+                        </button>
+                        <button
+                            onClick={() => {setShowDebtForm(!showDebtForm),setShowFilters(false)}}
+                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                        >
+                            <Plus size={18} />
+                            {showDebtForm ? "لابردن" : "زیادکردن"}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Debt Form Panel */}
@@ -271,9 +320,10 @@ const Debts = () => {
                                 <input
                                     type="text"
                                     name="debtor_name"
+                                    placeholder='ناوی قەرزدار..'
                                     value={debtFormData.debtor_name}
                                     onChange={handleDebtInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                 />
                             </div>
 
@@ -284,8 +334,9 @@ const Debts = () => {
                                     type="tel"
                                     name="debtor_phone"
                                     value={debtFormData.debtor_phone}
+                                    placeholder='0770-XXX-XXXX'
                                     onChange={handleDebtInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 text-right rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                 />
                             </div>
 
@@ -297,8 +348,9 @@ const Debts = () => {
                                     name="total_amount"
                                     value={debtFormData.total_amount}
                                     onChange={handleDebtInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                     required
+                                    placeholder='0'
                                     step="0.01"
                                     min="0"
                                 />
@@ -306,37 +358,40 @@ const Debts = () => {
 
                             {/* Currency */}
                             <div>
-                                <label className="block text-white/80 mb-2">دراو</label>
-                                <div className="flex border border-white/20">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDebtInputChange({ target: { name: "currency", value: "USD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${debtFormData.currency === "USD"
-                                            ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
-                                            }`}
-                                    >
-                                        <DollarSign size={18} /> USD
-                                    </button>
+                                <label className="block text-slate-300 mb-2">جۆری دراو</label>
+                                <div className="grid grid-cols-3 gap-2">
                                     <button
                                         type="button"
                                         onClick={() => handleDebtInputChange({ target: { name: "currency", value: "USDT" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${debtFormData.currency === "USDT"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${debtFormData.currency === "USDT"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <Coins size={18} /> USDT
+                                        <Coins size={18} />
+                                        <span className="text-sm mt-1">USDT</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDebtInputChange({ target: { name: "currency", value: "USD" } })}
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${debtFormData.currency === "USD"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                            }`}
+                                    >
+                                        <DollarSign size={18} />
+                                        <span className="text-sm mt-1">USD</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleDebtInputChange({ target: { name: "currency", value: "IQD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${debtFormData.currency === "IQD"
+                                        className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${debtFormData.currency === "IQD"
                                             ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
-                                        <Wallet size={18} /> IQD
+                                        <Wallet size={18} />
+                                        <span className="text-sm mt-1">IQD</span>
                                     </button>
                                 </div>
                             </div>
@@ -375,6 +430,42 @@ const Debts = () => {
                         </form>
                     </div>
                 )}
+                {/* Filter Section */}
+                {showFilters && (
+                    <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
+                        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                            <Filter size={20} /> گەڕان و فلتەر
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Search Input */}
+                            <div>
+                                <label className="block text-white/80 mb-2">گەڕان</label>
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full bg-white/5 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    placeholder="ناوی قەرزدار - بڕی پارە - تێبینی"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-4">
+                            <button
+                                onClick={handleFilterSubmit}
+                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
+                            >
+                                <Filter size={18} /> فلتەر
+                            </button>
+                            <button
+                                onClick={handleResetFilters}
+                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                            >
+                                <XCircle size={18} /> لابردنی فلتەرەکان
+                            </button>
+                        </div>
+                    </div>
+                )}
+
 
                 {/* Repayment Form Panel */}
                 {showRepaymentForm && selectedDebt && (
@@ -504,137 +595,159 @@ const Debts = () => {
 
                 {/* Debts List */}
                 <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {debts.length === 0 ? (
-                        <div className="col-span-full bg-slate-800/80 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center text-white/60">
-                            No debts found
-                        </div>
-                    ) : (
-                        debts.map((debt) => (
-                            <div key={debt.id} className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 hover:bg-slate-800/90 transition-colors">
-                                {/* Header */}
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-white">{debt.debtor_name ? debt.debtor_name : debt.safe_partner_name}</h3>
-                                        {debt.debtor_phone && (
-                                            <p className="text-white/70 flex items-center gap-2">
-                                                <Phone size={14} /> {debt.debtor_phone}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <span className={`px-2 py-1 rounded-full text-xs ${debt.is_fully_paid
-                                        ? 'bg-green-500/20 text-green-300'
-                                        : 'bg-amber-500/20 text-amber-300'
-                                        }`}>
-                                        {debt.is_fully_paid ? 'وەرگیراو' : 'قەرزدار'}
-                                    </span>
-                                </div>
-
-                                {/* Safe Info */}
-                                <div className="flex items-center gap-2 mb-4 text-white/80">
-                                    <Wallet size={16} />
-                                    <span>{debt.debt_safe.name} ({debt.debt_safe.type})</span>
-                                </div>
-
-                                {/* Amount Information */}
-                                <div className="mb-4">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-white/80">بڕی قەرز:</span>
-                                        <span className="text-white font-semibold">
-                                            {parseFloat(debt.total_amount).toFixed(2)} {debt.currency}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-white/80">کۆی وەرگیراو:</span>
-                                        <span className="text-green-400">
-                                            {parseFloat(debt.amount_repaid).toFixed(2)} {debt.currency}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center mb-3">
-                                        <span className="text-white/80">ماوە:</span>
-                                        <span className="text-amber-400 font-semibold">
-                                            {parseFloat(debt.remaining_amount).toFixed(2)} {debt.currency}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {debts.length === 0 ? (
+                            <div className="col-span-full bg-slate-800/80 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center text-white/60">
+                                No debts found
+                            </div>
+                        ) : (
+                            debts.map((debt) => (
+                                <div key={debt.id} className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 hover:bg-slate-800/90 transition-colors">
+                                    {/* Header */}
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-white">{debt.debtor_name ? debt.debtor_name : debt.safe_partner_name}</h3>
+                                            {debt.debtor_phone && (
+                                                <p className="text-white/70 flex items-center gap-2">
+                                                    <Phone size={14} /> {debt.debtor_phone}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <span className={`px-2 py-1 rounded-full text-xs ${debt.is_fully_paid
+                                            ? 'bg-green-500/20 text-green-300'
+                                            : 'bg-amber-500/20 text-amber-300'
+                                            }`}>
+                                            {debt.is_fully_paid ? 'وەرگیراو' : 'قەرزدار'}
                                         </span>
                                     </div>
 
-                                    {/* Progress Bar */}
-                                    <div className="w-full bg-white/10 rounded-full h-2 mb-1">
-                                        <div
-                                            className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `${Math.min(getProgressPercentage(debt), 100)}%` }}
-                                        />
+                                    {/* Safe Info */}
+                                    <div className="flex items-center gap-2 mb-4 text-white/80">
+                                        <Wallet size={16} />
+                                        <span>{debt.debt_safe.name} ({debt.debt_safe.type})</span>
                                     </div>
-                                    <div className="text-right text-xs text-white/60">
-                                        {getProgressPercentage(debt)}% دراوە
-                                    </div>
-                                </div>
 
-                                {/* Repayments */}
-                                {debt.repayments && debt.repayments.length > 0 && (
+                                    {/* Amount Information */}
                                     <div className="mb-4">
-                                        <h4 className="text-white/80 font-medium mb-2 flex items-center gap-2">
-                                            <Receipt size={16} /> دانەوەی قەرز
-                                        </h4>
-                                        <div className="space-y-1">
-                                            {debt.repayments.map((repayment) => (
-                                                <div key={repayment.id} className="flex justify-between items-center text-sm">
-                                                    <span className="text-white/70">{formatDate(repayment.created_at)}</span>
-                                                    <span className="text-green-400 flex items-center gap-2">
-                                                        +{parseFloat(repayment.amount).toLocaleString()} {repayment.currency}
-                                                        {/* Add delete button for each repayment */}
-                                                        <button
-                                                            onClick={() => handleDeleteRepayment(repayment.id, debt.id)}
-                                                            className="text-red-400 hover:text-red-500 transition-colors"
-                                                            title="Delete Repayment"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </span>
-                                                </div>
-                                            ))}
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-white/80">بڕی قەرز:</span>
+                                            <span className="text-white font-semibold">
+                                                {parseFloat(debt.total_amount).toFixed(2)} {debt.currency}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-white/80">کۆی وەرگیراو:</span>
+                                            <span className="text-green-400">
+                                                {parseFloat(debt.amount_repaid).toFixed(2)} {debt.currency}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="text-white/80">ماوە:</span>
+                                            <span className="text-amber-400 font-semibold">
+                                                {parseFloat(debt.remaining_amount).toFixed(2)} {debt.currency}
+                                            </span>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="w-full bg-white/10 rounded-full h-2 mb-1">
+                                            <div
+                                                className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                                                style={{ width: `${Math.min(getProgressPercentage(debt), 100)}%` }}
+                                            />
+                                        </div>
+                                        <div className="text-right text-xs text-white/60">
+                                            {getProgressPercentage(debt)}% دراوە
                                         </div>
                                     </div>
-                                )}
 
-                                {/* Note */}
-                                {debt.note && (
-                                    <div className="mb-4 p-3 bg-white/5 rounded-lg">
-                                        <p className="text-white/80 text-sm">{debt.note}</p>
-                                    </div>
-                                )}
+                                    {/* Repayments */}
+                                    {debt.repayments && debt.repayments.length > 0 && (
+                                        <div className="mb-4">
+                                            <h4 className="text-white/80 font-medium mb-2 flex items-center gap-2">
+                                                <Receipt size={16} /> دانەوەی قەرز
+                                            </h4>
+                                            <div className="space-y-1">
+                                                {debt.repayments.map((repayment) => (
+                                                    <div key={repayment.id} className="flex justify-between items-center text-sm">
+                                                        <span className="text-white/70">{formatDate(repayment.created_at)}</span>
+                                                        <span className="text-green-400 flex items-center gap-2">
+                                                            +{parseFloat(repayment.amount).toLocaleString()} {repayment.currency}
+                                                            {/* Add delete button for each repayment */}
+                                                            <button
+                                                                onClick={() => handleDeleteRepayment(repayment.id, debt.id)}
+                                                                className="text-red-400 hover:text-red-500 transition-colors"
+                                                                title="Delete Repayment"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
-                                {/* Actions */}
-                                <div className="flex justify-between items-center pt-4 border-t border-white/10">
-                                    <div className="text-sm text-white/60">
-                                        لە بەرواری: {formatDate(debt.created_at)}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {!debt.is_fully_paid && (
-                                            <button
-                                                onClick={() => handleAddRepayment(debt)}
-                                                className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors"
-                                            >
-                                                دانەوەی قەرز
-                                            </button>
-                                        )}
-                                        {/* Conditionally render the delete button based on whether there are repayments */}
-                                        {debt.repayments && debt.repayments.length === 0 && (
-                                            <button
-                                                onClick={() => handleDelete(debt.id)}
-                                                className="p-1 text-white/70 hover:text-red-400 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        )}
+                                    {/* Note */}
+                                    {debt.note && (
+                                        <div className="mb-4 p-3 bg-white/5 rounded-lg">
+                                            <p className="text-white/80 text-sm">{debt.note}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Actions */}
+                                    <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                                        <div className="text-sm text-white/60">
+                                            لە بەرواری: {formatDate(debt.created_at)}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            {!debt.is_fully_paid && (
+                                                <button
+                                                    onClick={() => handleAddRepayment(debt)}
+                                                    className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors"
+                                                >
+                                                    دانەوەی قەرز
+                                                </button>
+                                            )}
+                                            {/* Conditionally render the delete button based on whether there are repayments */}
+                                            {debt.repayments && debt.repayments.length === 0 && (
+                                                <button
+                                                    onClick={() => handleDelete(debt.id)}
+                                                    className="p-1 text-white/70 hover:text-red-400 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))
-                    )}
+                            ))
+                        )}
+                    </div>
                 </div>
+                <div className="flex justify-center mt-6 gap-2">
+                    <button
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 bg-white/10 text-white rounded disabled:opacity-50"
+                    >
+                        پێشتر
+                    </button>
+
+                    <span className="text-white">
+                        {currentPage} لە {totalPages}
+                    </span>
+
+                    <button
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 bg-white/10 text-white rounded disabled:opacity-50"
+                    >
+                        دواتر
+                    </button>
+                </div>
+
             </div>
-        </div>
         </div>
     );
 };

@@ -153,16 +153,50 @@ const PartnerReport = () => {
                 <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                         <CreditCard className="text-blue-400" size={20} />
-                        مامەڵەکانی کریپتۆ ({reportData.crypto_transactions?.length || 0})
+                        مامەڵەکانی کریپتۆ (شەریک) ({reportData.crypto_transactions?.length || 0})
                     </h3>
                     {reportData.crypto_transactions?.length > 0 ? (
                         <div className="space-y-2">
                             {reportData.crypto_transactions.map((transaction) => (
                                 <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
                                     <div>
-                                        <div className="text-white font-medium">{transaction.transaction_type}</div>
+                                        <div className="text-white font-medium">{transaction.transaction_type === 'Sell' ? 'فرۆشتن' : 'کڕین'}</div>
                                         <div className="text-white/70 text-sm">
-                                            {transaction.client_name || transaction.partner_client  || 'No client name'}
+                                            {transaction.client_name || transaction.partner_client?.partner.name  || 'No client name'}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-white font-bold">
+                                            {parseFloat(transaction.usdt_amount).toFixed(2)} USDT
+                                        </div>
+                                        <div className="text-green-400 text-sm">
+                                            نرخ: {parseFloat(transaction.usdt_price).toFixed(2)} {transaction.currency}
+                                        </div>
+                                        <div className="text-white/70 text-xs">
+                                            {formatDate(transaction.created_at)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-white/60">هیچ مامەڵەیەکی کریپتۆ نییە</p>
+                    )}
+                </div>
+                {/* Crypto Transactions */}
+                <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <CreditCard className="text-blue-400" size={20} />
+                        مامەڵەکانی کریپتۆ (کڕیار/فرۆشیار) ({reportData.crypto_transactions1?.length || 0})
+                    </h3>
+                    {reportData.crypto_transactions1?.length > 0 ? (
+                        <div className="space-y-2">
+                            {reportData.crypto_transactions1.map((transaction) => (
+                                <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                    <div>
+                                        <div className="text-white font-medium">{transaction.transaction_type === 'Sell' ? 'فرۆشتن' : 'کڕین'}</div>
+                                        <div className="text-white/70 text-sm">
+                                            {selectedPartner.label}
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -188,7 +222,7 @@ const PartnerReport = () => {
                 <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                         <ArrowDown className="text-green-400" size={20} />
-                        حەواڵەی هاتوو ({reportData.incoming_money?.length || 0})
+                        حەواڵەی هاتوو بۆ ئەو ({reportData.incoming_money?.length || 0})
                     </h3>
                     {reportData.incoming_money?.length > 0 ? (
                         <div className="space-y-2">
@@ -226,11 +260,11 @@ const PartnerReport = () => {
                 <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                         <ArrowDown className="text-green-400" size={20} />
-                        حەواڵەی هاتوو ({reportData.incoming_money?.length || 0})
+                        حەواڵەی هاتوو لە لایەن ئەو({reportData.incoming_money1?.length || 0})
                     </h3>
-                    {reportData.incoming_money?.length > 0 ? (
+                    {reportData.incoming_money1?.length > 0 ? (
                         <div className="space-y-2">
-                            {reportData.incoming_money.map((transaction) => (
+                            {reportData.incoming_money1.map((transaction) => (
                                 <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
                                     <div>
                                         <div className="text-white font-medium">
@@ -265,11 +299,49 @@ const PartnerReport = () => {
                 <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                         <ArrowUp className="text-red-400" size={20} />
-                        حەواڵەی کراو ({reportData.outgoing_money?.length || 0})
+                        حەواڵەکانی کردویەتی ({reportData.outgoing_money?.length || 0})
                     </h3>
                     {reportData.outgoing_money?.length > 0 ? (
                         <div className="space-y-2">
                             {reportData.outgoing_money.map((transaction) => (
+                                <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                    <div>
+                                        <div className="text-white font-medium">
+                                            {parseFloat(transaction.money_amount).toFixed(2)} {transaction.currency}
+                                        </div>
+                                        <div className="text-white/70 text-sm">
+                                            بارودۆخ: <span className={transaction.status === 'Completed' ? 'text-green-400' : 'text-amber-400'}>
+                                                {transaction.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-green-400 text-sm">
+                                            عمولەی من: +{parseFloat(transaction.my_bonus).toFixed(2)} {transaction.bonus_currency}
+                                        </div>
+                                        <div className="text-blue-400 text-sm">
+                                            عمولەی شەریک: +{parseFloat(transaction.partner_bonus).toFixed(2)} {transaction.bonus_currency}
+                                        </div>
+                                        <div className="text-white/70 text-xs">
+                                            {formatDate(transaction.created_at)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-white/60">هیچ حەواڵەیەکی کراو نییە.</p>
+                    )}
+                </div>
+                {/* Outgoing Money */}
+                <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <ArrowUp className="text-red-400" size={20} />
+                        حەواڵەی کراو بۆ ئەو ({reportData.outgoing_money1?.length || 0})
+                    </h3>
+                    {reportData.outgoing_money1?.length > 0 ? (
+                        <div className="space-y-2">
+                            {reportData.outgoing_money1.map((transaction) => (
                                 <div key={transaction.id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
                                     <div>
                                         <div className="text-white font-medium">

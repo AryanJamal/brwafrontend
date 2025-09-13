@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/apiService';
-import { Plus, ArrowUp, CreditCard, Wallet, Coins, ArrowDown, Clock, XCircle, User, DollarSign, FileText, ArrowLeftRight, Trash2, BanknoteX } from 'lucide-react';
+import { Plus, ArrowUp, CreditCard, Wallet, Coins, Filter, ArrowDown, Clock, XCircle, User, DollarSign, FileText, ArrowLeftRight, Trash2, BanknoteX } from 'lucide-react';
 import formatDate from '../components/formatdate';
 import selectStyles from '../components/styles';
 import Select from 'react-select';
@@ -11,41 +11,52 @@ const SafeTransactions = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
     const [formType, setFormType] = useState(null); // New state for form type
     const [isLoading, setIsLoading] = useState(false); // Changed to false to prevent initial loader from showing
+    const [search, setSearch] = useState("");
+    const [filterTransactionType, setFilterTransactionType] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    // eslint-disable-next-line no-unused-vars
+    const [pageSize, setPageSize] = useState(30);
+    const [totalPages, setTotalPages] = useState(1);
 
     const [formData, setFormData] = useState({
-        // For both forms
         money_amount: '',
         currency: 'USD',
         note: '',
-        // For 'transaction' form
         partner: '',
         transaction_type: 'ADD',
-        // For 'transfer' form
         from_safepartner: '',
         to_safepartner: ''
     });
 
+    const fetchData = async (params = {}) => {
+        try {
+            setShowFilters(false);
+            const [transRes, partnersRes] = await Promise.all([
+                api.safeTransactions.getAll({ page: currentPage, page_size: pageSize, ...params }),
+                api.safePartnersApi.getAll()
+            ]);
+
+            setTransactions(transRes.data.results);
+            setTotalPages(Math.ceil(transRes.data.count / pageSize));
+            setPartners(partnersRes.data);
+            setLoading(false);
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [transRes, partnersRes] = await Promise.all([
-                    api.safeTransactions.getAll(),
-                    api.safePartnersApi.getAll()
-                ]);
-
-                setTransactions(transRes.data);
-                setPartners(partnersRes.data);
-                setLoading(false);
-            } catch (err) {
-                setError(err.message);
-                setLoading(false);
-            }
-        };
-
         fetchData();
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPage, pageSize]);
+
+    const handlePageChange = (newPage) => {
+        if (newPage < 1 || newPage > totalPages) return;
+        setCurrentPage(newPage);
+    };
 
     const handleSelectChange = (name, selectedOption) => {
         setFormData(prev => ({ ...prev, [name]: selectedOption ? selectedOption.value : '' }));
@@ -54,6 +65,22 @@ const SafeTransactions = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+    const handleFilterSubmit = () => {
+        const params = {};
+        if (search) {
+            params.search = search;
+        }
+        if (filterTransactionType) {
+            params.transaction_type = filterTransactionType.value;
+        }
+        fetchData(params);
+    };
+    const handleResetFilters = () => {
+        setShowFilters(false);
+        setSearch("");
+        setFilterTransactionType(null);
+        fetchData();
     };
 
     const handleSubmit = async (e) => {
@@ -182,19 +209,36 @@ const SafeTransactions = () => {
             <div className="mx-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-white">گۆڕانکاری پارە</h1>
-                    <button
-                        onClick={() => {
-                            if (showForm) {
-                                resetForm();
-                            } else {
-                                setShowForm(true);
-                            }
-                        }}
-                        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
-                    >
-                        <Plus size={18} />
-                        {showForm ? "لابردن" : "زیادکردن"}
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => {
+                                if (showFilters) {
+                                    setShowFilters(false);
+                                } else {
+                                    setShowForm(false);
+                                    setShowFilters(true);
+                                }
+                            }}
+                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                        >
+                            <Filter size={18} />
+                            {showFilters ? "لابردن" : "فلتەرکردن"}
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (showForm) {
+                                    resetForm();
+                                } else {
+                                    setShowFilters(false);
+                                    setShowForm(true);
+                                }
+                            }}
+                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                        >
+                            <Plus size={18} />
+                            {showForm ? "لابردن" : "زیادکردن"}
+                        </button>
+                    </div>
                 </div>
 
                 {showForm && (
@@ -575,7 +619,53 @@ const SafeTransactions = () => {
                         )}
                     </>
                 )}
-
+                {/* Filter Section */}
+                {showFilters && (
+                    <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
+                        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                            <Filter size={20} /> گەڕان و فلتەر
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Search Input */}
+                            <div>
+                                <label className="block text-white/80 mb-2">گەڕان بەدوای شەریک یان تێبینی</label>
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full bg-white/5 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    placeholder="ناوی شەریک، بڕی پارە یان تێبینی..."
+                                />
+                            </div>
+                            {/* Transaction Type Filter */}
+                            <div>
+                                <label className="block text-white/80 mb-2">فلتەر بەپێی جۆری مامەڵە</label>
+                                <Select
+                                    options={transactionTypeOptions}
+                                    value={filterTransactionType}
+                                    onChange={setFilterTransactionType}
+                                    styles={selectStyles}
+                                    placeholder="هەموو جۆرەکان..."
+                                    isClearable
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-4">
+                            <button
+                                onClick={handleFilterSubmit}
+                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
+                            >
+                                <Filter size={18} /> فلتەر
+                            </button>
+                            <button
+                                onClick={handleResetFilters}
+                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
+                            >
+                                <XCircle size={18} /> لابردنی فلتەرەکان
+                            </button>
+                        </div>
+                    </div>
+                )}
                 {/* Transactions List as Cards */}
                 <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg p-4 sm:p-6 md:p-0 overflow-hidden">
                     <div className="space-y-4 ">
@@ -666,6 +756,26 @@ const SafeTransactions = () => {
                         )}
                     </div>
                 </div>
+                <div className="flex justify-between items-center mt-4 text-white">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 rounded bg-gray-600 disabled:opacity-50"
+                    >
+                        پێشتر
+                    </button>
+
+                    <span>{currentPage} لە {totalPages}</span>
+
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 rounded bg-gray-600 disabled:opacity-50"
+                    >
+                        داهاتوو
+                    </button>
+                </div>
+
             </div>
         </div>
     );
