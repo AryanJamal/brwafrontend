@@ -156,6 +156,44 @@ const SafePartners = () => {
                     }
                 }
             }
+            const cryptoPending = pendingTotals.crypto || {};
+            for (const currency in cryptoPending) {
+                if (Object.prototype.hasOwnProperty.call(cryptoPending, currency)) {
+                    for (const partnerType in cryptoPending[currency]) {
+                        if (Object.prototype.hasOwnProperty.call(cryptoPending[currency], partnerType)) {
+                            const totalToAdd = Number(cryptoPending[currency][partnerType]);
+                            // Find the corresponding safeTypeName and add the amount
+                            const safeTypeForPartnerType = safeTypes.find(type => type.name === partnerType);
+                            if (safeTypeForPartnerType) {
+                                const safeTypeName = safeTypeForPartnerType.name;
+                                const key = currency.toLowerCase();
+                                if (calculatedTotals[safeTypeName] && calculatedTotals[safeTypeName][key] !== undefined) {
+                                    calculatedTotals[safeTypeName][key] += totalToAdd;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            const cryptoPending1 = pendingTotals.crypto1 || {};
+            for (const currency in cryptoPending1) {
+                if (Object.prototype.hasOwnProperty.call(cryptoPending1, currency)) {
+                    for (const partnerType in cryptoPending1[currency]) {
+                        if (Object.prototype.hasOwnProperty.call(cryptoPending1[currency], partnerType)) {
+                            const totalToAdd = Number(cryptoPending1[currency][partnerType]);
+                            // Find the corresponding safeTypeName and add the amount
+                            const safeTypeForPartnerType = safeTypes.find(type => type.name === partnerType);
+                            if (safeTypeForPartnerType) {
+                                const safeTypeName = safeTypeForPartnerType.name;
+                                const key = currency.toLowerCase();
+                                if (calculatedTotals[safeTypeName] && calculatedTotals[safeTypeName][key] !== undefined) {
+                                    calculatedTotals[safeTypeName][key] -= totalToAdd;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             setTotals(calculatedTotals);
         } else {
             setTotals({});

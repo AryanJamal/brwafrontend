@@ -119,7 +119,7 @@ const SafeTransactions = () => {
 
             await api.safeTransactions.create(dataToSend);
             const res = await api.safeTransactions.getAll();
-            setTransactions(res.data);
+            setTransactions(res.data.results);
             resetForm();
         } catch (err) {
             setError(err.message);

@@ -123,7 +123,7 @@ const Debts = () => {
         try {
             await api.debt.create(debtFormData);
             const res = await api.debt.getAll();
-            setDebts(res.data);
+            setDebts(res.data.results);
             resetDebtForm();
         } catch (err) {
             setError(err.message);
@@ -142,7 +142,7 @@ const Debts = () => {
             });
 
             const res = await api.debt.getAll();
-            setDebts(res.data);
+            setDebts(res.data.results);
             setRepaymentFormData({ amount: '', safe_type_id: '', currency: 'USD', conversion_rate: 1 });
             setShowRepaymentForm(false);
             setSelectedDebt(null);
@@ -187,7 +187,7 @@ const Debts = () => {
 
                 // Re-fetch all debts to get the updated list
                 const res = await api.debt.getAll();
-                setDebts(res.data);
+                setDebts(res.data.results);
 
                 // Optional: You could also update the state more efficiently without a full re-fetch
                 // by finding the debt and removing the repayment from its array.
@@ -496,22 +496,61 @@ const Debts = () => {
                                     name="amount"
                                     value={repaymentFormData.amount}
                                     onChange={handleRepaymentInputChange}
-                                    className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                     required
                                     step="0.01"
                                     min="0.01"
                                 />
                             </div>
+                            {/* Currency */}
+                                    <div>
+                                        <label className="block text-slate-300 mb-2">جۆری دراو</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRepaymentInputChange({ target: { name: "currency", value: "USDT" } })}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${repaymentFormData.currency === "USDT"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
+                                            >
+                                                <Coins size={18} />
+                                                <span className="text-sm mt-1">USDT</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRepaymentInputChange({ target: { name: "currency", value: "USD" } })}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${repaymentFormData.currency === "USD"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
+                                            >
+                                                <DollarSign size={18} />
+                                                <span className="text-sm mt-1">USD</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRepaymentInputChange({ target: { name: "currency", value: "IQD" } })}
+                                                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all ${repaymentFormData.currency === "IQD"
+                                                    ? "bg-blue-600 text-white"
+                                                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                                    }`}
+                                            >
+                                                <Wallet size={18} />
+                                                <span className="text-sm mt-1">IQD</span>
+                                            </button>
+                                        </div>
+                                    </div>
                             {/* Conversion Rate (only show if different currency) */}
                             {repaymentFormData.currency !== selectedDebt.currency && (
                                 <div>
-                                    <label className="block text-white/80 mb-2"> نرخ گۆڕین </label>
+                                    <label className="block text-white/80 mb-2"> نرخ گۆڕین <span className='text-red-500'>*</span></label>
                                     <input
                                         type="number"
                                         name="conversion_rate"
                                         value={repaymentFormData.conversion_rate}
                                         onChange={handleRepaymentInputChange}
-                                        className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                        className="w-full bg-white/5 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                         step="0.01"
                                         min="0.01"
                                         required
@@ -535,40 +574,6 @@ const Debts = () => {
                                 />
                             </div>
 
-                            {/* Currency */}
-                            <div>
-                                <label className="block text-white/80 mb-2">دراو</label>
-                                <div className="flex border border-white/20">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRepaymentInputChange({ target: { name: "currency", value: "USD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${repaymentFormData.currency === "USD"
-                                            ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
-                                            }`}
-                                    >
-                                        <DollarSign size={18} /> USD
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRepaymentInputChange({ target: { name: "currency", value: "USDT" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${repaymentFormData.currency === "USDT"
-                                            ? "bg-blue-600 text-white"
-                                            : "text-white/70 hover:bg-white/10"
-                                            }`}
-                                    >
-                                        <Coins size={18} /> USDT
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRepaymentInputChange({ target: { name: "currency", value: "IQD" } })}
-                                        className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-md transition-all ${repaymentFormData.currency === "IQD" ? "bg-blue-600 text-white" : "text-white/70 hover:bg-white/10"
-                                            }`}
-                                    >
-                                        <Wallet size={18} /> IQD
-                                    </button>
-                                </div>
-                            </div>
 
                             {/* Actions */}
                             <div className="flex gap-3 pt-2">
