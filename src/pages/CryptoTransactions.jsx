@@ -172,7 +172,8 @@ const CryptoTransactions = () => {
         }
     };
 
-    const handleComplete = (id) => {
+    const handleComplete = (id,bonus) => {
+        setBonus(bonus)
         setTransactionToDelete(id);
         setShowConfirmModal(true);
     };
@@ -190,7 +191,7 @@ const CryptoTransactions = () => {
             // Ensure the modal closes and state is reset regardless of success or failure
             setShowConfirmModal(false);
             setTransactionToDelete(null);
-            setBonus(0)
+            setBonus(bonus)
         }
     };
 
@@ -680,6 +681,14 @@ const CryptoTransactions = () => {
                                                 <span className="text-white/80 text-sm">کات:</span>
                                                 <span className="font-medium text-white">{formatDate(transaction.created_at)}</span>
                                             </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-white/80 text-sm">قاسەی کریپتۆ:</span>
+                                                <span className="font-medium text-white">{transaction.crypto_safe.name}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-white/80 text-sm">قاسە:</span>
+                                                <span className="font-medium text-white">{transaction.payment_safe.name}</span>
+                                            </div>
                                         </div>
                                         {transaction.partner != null && (
                                             <div className="bg-white/5 rounded-2xl p-3 mb-4 mt-3">
@@ -711,7 +720,7 @@ const CryptoTransactions = () => {
                                         <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-4">
                                             {transaction.status === 'Pending' && (
                                                 <button
-                                                    onClick={() => handleComplete(transaction.id)}
+                                                    onClick={() => handleComplete(transaction.id,transaction.bonus)}
                                                     className="text-green-400 transition-colors p-2 rounded-full hover:bg-white/5"
                                                 >
                                                     <CheckCircle size={22} />

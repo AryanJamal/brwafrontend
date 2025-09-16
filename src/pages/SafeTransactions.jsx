@@ -20,6 +20,8 @@ const SafeTransactions = () => {
     // eslint-disable-next-line no-unused-vars
     const [pageSize, setPageSize] = useState(30);
     const [totalPages, setTotalPages] = useState(1);
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [formData, setFormData] = useState({
         money_amount: '',
@@ -74,12 +76,23 @@ const SafeTransactions = () => {
         if (filterTransactionType) {
             params.transaction_type = filterTransactionType.value;
         }
+        // Add start_date and end_date to the params object
+        if (startDate) {
+            params.start_date = startDate;
+        }
+        if (endDate) {
+            params.end_date = endDate;
+        }
+
         fetchData(params);
     };
     const handleResetFilters = () => {
         setShowFilters(false);
         setSearch("");
         setFilterTransactionType(null);
+        // Reset the new date states
+        setStartDate("");
+        setEndDate("");
         fetchData();
     };
 
@@ -620,48 +633,69 @@ const SafeTransactions = () => {
                     </>
                 )}
                 {/* Filter Section */}
+                {/* Filter Form */}
                 {showFilters && (
                     <div className="bg-slate-800/80 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg p-6 mb-8 transition-all">
-                        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                            <Filter size={20} /> گەڕان و فلتەر
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             {/* Search Input */}
                             <div>
-                                <label className="block text-white/80 mb-2">گەڕان بەدوای شەریک یان تێبینی</label>
+                                <label className="block text-white/80 mb-2">گەڕان بەدوای ناودا</label>
                                 <input
                                     type="text"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    placeholder="گەڕان..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="w-full bg-white/5 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    placeholder="ناوی شەریک، بڕی پارە یان تێبینی..."
                                 />
                             </div>
                             {/* Transaction Type Filter */}
                             <div>
-                                <label className="block text-white/80 mb-2">فلتەر بەپێی جۆری مامەڵە</label>
+                                <label className="block text-white/80 mb-2">جۆری مامەڵە</label>
                                 <Select
+                                    name="transaction_type"
                                     options={transactionTypeOptions}
-                                    value={filterTransactionType}
                                     onChange={setFilterTransactionType}
+                                    value={filterTransactionType}
                                     styles={selectStyles}
-                                    placeholder="هەموو جۆرەکان..."
+                                    placeholder="جۆر دیاری بکە.."
                                     isClearable
                                 />
                             </div>
+                            {/* Start Date Input */}
+                            <div>
+                                <label className="block text-white/80 mb-2">لە بەرواری</label>
+                                <input
+                                    type="date"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                />
+                            </div>
+                            {/* End Date Input */}
+                            <div>
+                                <label className="block text-white/80 mb-2">بۆ بەرواری</label>
+                                <input
+                                    type="date"
+                                    className="w-full bg-white/5 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                />
+                            </div>
                         </div>
-                        <div className="flex gap-3 mt-4">
+                        <div className="flex gap-3 pt-4">
                             <button
                                 onClick={handleFilterSubmit}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
+                                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
                             >
-                                <Filter size={18} /> فلتەر
+                                <Filter size={18} />
+                                فلتەرکردن
                             </button>
                             <button
                                 onClick={handleResetFilters}
                                 className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2 rounded-lg transition-all"
                             >
-                                <XCircle size={18} /> لابردنی فلتەرەکان
+                                <XCircle size={18} />
+                                لابردنی فلتەرەکان
                             </button>
                         </div>
                     </div>

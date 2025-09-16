@@ -147,7 +147,9 @@ const IncomingMoney = () => {
             setPartnerToDeleteId(null);
         }
     };
-    const handleComplete = (id) => {
+    const handleComplete = (id,bonus,bonus2) => {
+        setBonus(bonus)
+        setBonus2(bonus2)
         setPartnerToDeleteId(id);
         setShowConfirmModal2(true);
     };
@@ -676,7 +678,7 @@ const IncomingMoney = () => {
                                         <div className="mt-4 pt-4 border-t border-white/10 flex justify-end gap-3">
                                             {transaction.status === 'Pending' && (
                                                 <button
-                                                    onClick={() => handleComplete(transaction.id)}
+                                                    onClick={() => handleComplete(transaction.id,transaction.my_bonus,transaction.partner_bonus)}
                                                     className="text-white/70 hover:text-green-400 transition-colors text-sm"
                                                 >
                                                     <CheckCircle size={22} />
